@@ -106,12 +106,19 @@ button{font:inherit;color:inherit;cursor:pointer}
 .sync{font-size:14px;color:var(--muted)}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .foot{margin-top:28px;font-size:14px;color:var(--muted)}
+.brand{display:inline-flex;background:#fff;border-radius:12px;padding:6px 10px;border:1px solid var(--line);flex:none}
+.brand img{display:block;height:40px;width:auto;max-width:100%}
+.sitefoot{border-top:2px solid var(--line);margin-top:36px;padding-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.sitefoot .brand img{height:30px}
+.sitefoot a{color:var(--ink);font-weight:700}
+.sitefoot p{margin:0;flex:1;min-width:220px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
+    <a class="brand" href="https://kompschool.com" target="_blank" rel="noopener" title="Школа комп'ютерної майстерності"><img src="logo-shkm.svg" alt="Школа комп'ютерної майстерності"></a>
     <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
     <h1>Клік: тренажер друку</h1>
     <div class="who" id="who" hidden><span id="whoName"></span><button class="btn small" id="logout">Змінити учня</button></div>
@@ -121,11 +128,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vLogin" hidden>
     <div class="card login">
       <div class="say" style="margin:0"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
-        <div class="bubble">Привіт! Я <b>Клік</b>. Напиши своє ім'я та клас, щоб учитель бачив твої успіхи.</div></div>
+        <div class="bubble">Привіт! Я <b>Клік</b>. Напиши своє ім'я та номер групи, щоб учитель бачив твої успіхи.</div></div>
       <label for="inName">Прізвище та ім'я</label>
       <input id="inName" autocomplete="off" maxlength="40" placeholder="Наприклад: Коваленко Марія">
-      <label for="inClass">Клас або група</label>
-      <input id="inClass" autocomplete="off" maxlength="20" placeholder="Наприклад: 5-А">
+      <label for="inClass">Номер групи</label>
+      <input id="inClass" autocomplete="off" maxlength="20" placeholder="Наприклад: 2026-61">
       <button class="btn primary" id="btnLogin">Почати</button>
       <div class="hintline" id="loginErr" style="color:var(--bad)"></div>
     </div>
@@ -175,6 +182,11 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="sync" id="rSync"></div>
     </div>
   </section>
+
+  <footer class="sitefoot">
+    <a class="brand" href="https://kompschool.com" target="_blank" rel="noopener" title="Школа комп'ютерної майстерності"><img src="logo-shkm.svg" alt="Школа комп'ютерної майстерності"></a>
+    <p>© <span id="year">2026</span> <a href="https://kompschool.com" target="_blank" rel="noopener">Школа комп'ютерної майстерності</a>. Усі права захищено. Тренажер, вправи та персонаж Клік є авторськими матеріалами школи.</p>
+  </footer>
 </div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -329,6 +341,7 @@ function sendResult(r){
 }
 
 /* старт */
+$("year").textContent=new Date().getFullYear();
 if(state.student){renderList(); show("vList");} else {show("vLogin"); $("inName").focus();}
 </script>
 </body>
