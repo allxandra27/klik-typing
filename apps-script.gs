@@ -19,10 +19,10 @@ function doPost(e) {
   return ContentService.createTextOutput('ok');
 }
 
-// Текст від учнів не повинен перетворитися на формулу в таблиці.
+// Текст від учнів завжди зберігається як текст: не стане ні формулою, ні датою.
 function clean(v) {
   const s = String(v == null ? '' : v).slice(0, 60);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  return "'" + s; // апостроф: таблиця зберігає як текст (клас «6-1» не стане датою)
 }
 
 function num(v) {
