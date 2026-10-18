@@ -104,6 +104,26 @@ button{font:inherit;color:inherit;cursor:pointer}
 .result .nums{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .result .nums div{display:grid}
 .result .nums b{font-family:var(--display);font-size:26px;color:var(--ink)}
+/* метроном */
+.metro{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 8px;font-weight:700;color:var(--muted)}
+.metro-on{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)}
+.metro-on input{width:18px;height:18px;accent-color:var(--ink)}
+.metro-set{display:inline-flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.metro-set input{width:160px;accent-color:var(--bad)}
+.metro-set b{color:var(--fg);min-width:2.2em;text-align:right}
+.metro.off .metro-set,.metro.off .lamp,.metro.off .metro-hint{display:none}
+.lamp{width:30px;height:30px;border-radius:50%;background:#5a1d1a;border:3px solid #3a0f0d;box-shadow:inset 0 2px 4px rgba(0,0,0,.4);flex:none}
+.lamp.on{background:#ff3b30;border-color:#c1271f;box-shadow:0 0 16px 6px rgba(255,59,48,.75)}
+.metro-hint{font-size:14px;font-weight:600}
+/* ритм */
+.rhythm{width:100%;max-width:640px;text-align:left;display:grid;gap:6px}
+.rhythm-title{font-weight:800;color:var(--ink);font-size:15px}
+.rhythm-title span{font-weight:600;color:var(--muted);font-size:13px}
+.bars{display:flex;align-items:flex-end;gap:1px;height:70px;background:var(--fill);border-radius:10px;padding:6px;overflow:hidden}
+.bars i{flex:1 1 0;min-width:1px;background:var(--ink);border-radius:2px 2px 0 0;opacity:.8}
+.bars i.slow{background:var(--pop);opacity:1}
+.rhythm-slow{font-size:14px;color:var(--muted)}
+.rhythm-slow b{color:var(--fg)}
 .result .klik{width:120px;height:120px}
 .sync{font-size:14px;color:var(--muted)}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
@@ -155,6 +175,15 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="bubble" id="tBubble"></div></div>
     <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span></div>
     <div class="progress"><i id="pBar"></i></div>
+    <div class="metro">
+      <label class="metro-on"><input type="checkbox" id="metroOn"> Метроном</label>
+      <span class="metro-set" id="metroSet">
+        <input type="range" id="metroBpm" min="20" max="180" step="5" value="60" aria-label="Темп метронома, ударів за хвилину">
+        <b id="metroVal">60</b>&nbsp;уд/хв
+      </span>
+      <span class="lamp" id="lamp" aria-hidden="true"></span>
+      <span class="metro-hint" id="metroHint">Натискай клавішу щоразу, коли блимає лампочка</span>
+    </div>
     <div class="warn" id="warn" hidden></div>
     <div class="strip" id="strip" aria-live="polite"></div>
     <div class="next-line" id="nextLine"></div>
@@ -179,6 +208,13 @@ button{font:inherit;color:inherit;cursor:pointer}
         <div><b id="rCpm"></b><span>знаків за хвилину</span></div>
         <div><b id="rErr"></b><span>помилок</span></div>
         <div><b id="rTime"></b><span>час</span></div>
+        <div id="rRhythmBox"><b id="rRhythm"></b><span>ритмічність</span></div>
+        <div id="rTempoBox" hidden><b id="rTempo"></b><span id="rTempoLbl">темп</span></div>
+      </div>
+      <div class="rhythm" id="rhythmBox">
+        <div class="rhythm-title">Ритм твого друку <span>(кожна смужка — пауза між натисканнями; чим рівніші смужки, тим краще)</span></div>
+        <div class="bars" id="rBars"></div>
+        <div class="rhythm-slow" id="rSlow"></div>
       </div>
       <div class="actions"><button class="btn" id="rAgain">Ще раз</button><button class="btn primary" id="rNext">Наступний урок</button><button class="btn" id="rList">До уроків</button></div>
       <div class="sync" id="rSync"></div>
@@ -203,8 +239,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610181917"></script>
-<script src="lessons.js?v=202610181917"></script>
+<script src="config.js?v=202610181926"></script>
+<script src="lessons.js?v=202610181926"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -239,7 +275,7 @@ $("btnLogin").onclick=()=>{
   state.student={name,cls}; save(); renderList(); show("vList");
 };
 [$("inName"),$("inClass")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{state.student=null; state.lessons={}; save(); $("inName").value=""; $("inClass").value=""; show("vLogin"); $("inName").focus();};
+$("logout").onclick=()=>{state.student=null; state.lessons={}; save(); metroStop(); $("inName").value=""; $("inClass").value=""; show("vLogin"); $("inName").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -265,10 +301,42 @@ $("lessonGroups").addEventListener("click",e=>{const b=e.target.closest(".lesson
 
 /* ---------- тренування ---------- */
 let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false;
+let hits=[]; // правильні натискання: {t: час, ch: символ}
 function startLesson(id){
-  L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false;
+  L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[];
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
-  $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain");
+  $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroApply();
+}
+
+/* ---------- метроном (беззвучний, лампочка) ---------- */
+state.settings=Object.assign({metroOn:false,bpm:60},state.settings||{});
+let metroTimer=null, lampTimer=null;
+function metroStop(){clearInterval(metroTimer); clearTimeout(lampTimer); metroTimer=null; $("lamp").classList.remove("on");}
+function metroBeat(){const l=$("lamp"); l.classList.add("on"); clearTimeout(lampTimer); lampTimer=setTimeout(()=>l.classList.remove("on"),Math.min(150,30000/state.settings.bpm));}
+function metroApply(){
+  const s=state.settings;
+  $("metroOn").checked=s.metroOn; $("metroBpm").value=s.bpm; $("metroVal").textContent=s.bpm;
+  document.querySelector(".metro").classList.toggle("off",!s.metroOn);
+  metroStop();
+  if(s.metroOn&&!$("vTrain").hidden){metroBeat(); metroTimer=setInterval(metroBeat,60000/s.bpm);}
+}
+$("metroOn").addEventListener("change",e=>{state.settings.metroOn=e.target.checked; save(); metroApply(); e.target.blur();});
+$("metroBpm").addEventListener("input",e=>{state.settings.bpm=Number(e.target.value); $("metroVal").textContent=e.target.value; save(); metroApply();});
+$("metroBpm").addEventListener("change",e=>e.target.blur());
+
+/* ---------- ритм ---------- */
+const PAUSE=2000; // паузи довші за 2 с — учень відволікся, у ритм не рахуємо
+function rhythmStats(){
+  const gaps=[];
+  for(let i=1;i<hits.length;i++){const dt=hits[i].t-hits[i-1].t; if(dt<=PAUSE) gaps.push({dt,ch:hits[i].ch});}
+  if(gaps.length<5) return null;
+  const mean=gaps.reduce((a,g)=>a+g.dt,0)/gaps.length;
+  const sd=Math.sqrt(gaps.reduce((a,g)=>a+(g.dt-mean)**2,0)/gaps.length);
+  const sorted=gaps.map(g=>g.dt).sort((a,b)=>a-b), median=sorted[Math.floor(sorted.length/2)];
+  const byCh={}; gaps.forEach(g=>{(byCh[g.ch]=byCh[g.ch]||[]).push(g.dt)});
+  const slow=Object.entries(byCh).filter(([,a])=>a.length>=2).map(([ch,a])=>[ch,a.reduce((x,y)=>x+y,0)/a.length])
+    .filter(([,avg])=>avg>median*1.5).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([ch])=>ch===" "?"пробіл":ch.toUpperCase());
+  return {gaps,median,slow,rhythm:Math.max(0,Math.min(100,Math.round(100*(1-sd/mean)))),tempo:Math.round(60000/mean)};
 }
 function buildKb(){
   const allowed=new Set(L.lines.join("").replace(/ /g,"").split(""));
@@ -311,15 +379,15 @@ document.addEventListener("keydown",e=>{
   $("warn").hidden=true;
   if(!t0){t0=Date.now(); timer=setInterval(updStats,1000);}
   typed++;
-  if(got===want){pos++; if(pos>=L.lines[li].length){li++; pos=0; if(li>=L.lines.length){finish();return;}}}
+  if(got===want){hits.push({t:performance.now(),ch:want}); pos++; if(pos>=L.lines[li].length){li++; pos=0; if(li>=L.lines.length){finish();return;}}}
   else{errs++; const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
-$("tBack").onclick=()=>{clearInterval(timer); renderList(); show("vList");};
+$("tBack").onclick=()=>{clearInterval(timer); metroStop(); renderList(); show("vList");};
 
 /* ---------- результат ---------- */
 function finish(){
-  clearInterval(timer);
+  clearInterval(timer); metroStop();
   const sec=Math.max(1,Math.round((Date.now()-t0)/1000));
   const acc=Math.max(0,Math.floor(100*(typed-errs)/typed));
   const cpm=Math.round((typed-errs)/(sec/60));
@@ -333,8 +401,24 @@ function finish(){
   $("rTime").textContent=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`;
   const nx=nextOf(L); $("rNext").hidden=!nx||!isOpen(nx);
   if(nx&&!isOpen(nx)) $("rMsg").innerHTML+=`<br>Щоб відкрити наступний урок, потрібно щонайменше ${NEED} ${NEED===1?"зірочку":"зірочки"}.`;
+  // ритм
+  const R=rhythmStats(), bpm=state.settings.metroOn?state.settings.bpm:null;
+  $("rRhythmBox").hidden=$("rhythmBox").hidden=!R;
+  if(R){
+    $("rRhythm").textContent=R.rhythm+"%";
+    const cap=Math.max(R.median*3,1), gs=R.gaps.slice(-160);
+    $("rBars").innerHTML=gs.map(g=>`<i class="${g.dt>R.median*1.6?"slow":""}" style="height:${Math.max(4,Math.min(100,100*g.dt/cap))}%"></i>`).join("");
+    $("rSlow").innerHTML=R.slow.length?`Найдовше думав над: <b>${R.slow.join(", ")}</b>. Потренуй ці клавіші ще трохи!`:"Жодна клавіша не гальмувала — молодець!";
+    $("rMsg").innerHTML+=R.rhythm>=80?"<br>Ти друкуєш рівно, як годинник! ⏱":R.rhythm<50?"<br>Спробуй друкувати рівніше: краще повільно, але в однаковому темпі.":"";
+  }
+  $("rTempoBox").hidden=!(R&&bpm);
+  if(R&&bpm){
+    $("rTempo").textContent=`${R.tempo}/${bpm}`; $("rTempoLbl").textContent="твій темп / метроном, уд/хв";
+    if(Math.abs(R.tempo-bpm)/bpm<=0.15) $("rMsg").innerHTML+="<br>І чудово тримаєш темп метронома! 🚦";
+  }
   show("vResult");
-  sendResult({lesson:L.id,title:L.title,stars,accuracy:acc,cpm,errors:errs,seconds:sec});
+  sendResult({lesson:L.id,title:L.title,stars,accuracy:acc,cpm,errors:errs,seconds:sec,
+    rhythm:R?R.rhythm:"",metronome:bpm||"",tempo:R&&bpm?R.tempo:""});
 }
 $("rAgain").onclick=()=>startLesson(L.id);
 $("rNext").onclick=()=>{const nx=nextOf(L); if(nx&&isOpen(nx)) startLesson(nx.id);};
