@@ -160,6 +160,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   .result .klik{width:84px;height:84px}
   .bar h2{font-size:16px}
 }
+.pausebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:3px solid var(--pop);border-radius:16px;padding:14px 16px;margin:6px 0 10px}
+.pausebox .klik{width:56px;height:56px}
+.pausebox div{flex:1;min-width:200px}
+.pausebox b{color:var(--ink);font-family:var(--display)}
+.paused .strip,.paused .kb,.paused .next-line,.paused .hintline{opacity:.35;filter:grayscale(.6)}
 .nokb{display:flex;gap:12px;align-items:center;background:var(--surface);border:2px solid var(--bad);border-radius:16px;padding:12px 14px;margin:6px 0 12px}
 .nokb .klik{width:56px;height:56px}
 .nokb p{margin:0}
@@ -202,7 +207,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
   <!-- тренажер -->
   <section id="vTrain" hidden>
-    <div class="bar"><h2 id="tTitle"></h2><button class="btn small" id="tBack">← До уроків</button></div>
+    <div class="bar"><h2 id="tTitle"></h2><button class="btn small" id="tPause" title="Пауза (Esc)">⏸ Пауза</button><button class="btn small" id="tBack">← До уроків</button></div>
     <div class="say" style="margin:4px 0 10px"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true" style="width:64px;height:64px"><use href="#klik"/></svg>
       <div class="bubble" id="tBubble"></div></div>
     <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span></div>
@@ -219,6 +224,11 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="nokb" id="noKbTrain" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div class="warn" id="warn" hidden></div>
+    <div class="pausebox" id="pauseBox" hidden>
+      <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
+      <div><b>Перерва!</b> Час зупинено, натискання не рахуються. Відпочинь і продовж, коли будеш готовий.</div>
+      <button class="btn primary" id="tResume">▶ Продовжити</button>
+    </div>
     <div class="strip" id="strip" aria-live="polite"></div>
     <div class="next-line" id="nextLine"></div>
     <div class="hintline" id="fingerHint"></div>
@@ -273,8 +283,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211315"></script>
-<script src="lessons.js?v=202610211315"></script>
+<script src="config.js?v=202610211318"></script>
+<script src="lessons.js?v=202610211318"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -338,9 +348,14 @@ $("lessonGroups").addEventListener("click",e=>{const b=e.target.closest(".lesson
 
 /* ---------- тренування ---------- */
 let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false;
-let hits=[]; // правильні натискання: {t: час, ch: символ}
+let hits=[];
+let paused=false, pausedMs=0, pauseAt=0; // час на паузі не рахується
+const elapsed=()=>t0?(Date.now()-t0-pausedMs-(paused?Date.now()-pauseAt:0)):0;
+function setPausedUi(){$("pauseBox").hidden=!paused; $("vTrain").classList.toggle("paused",paused); $("tPause").hidden=paused;}
+function pause(){if(paused||$("vTrain").hidden) return; paused=true; pauseAt=Date.now(); metroStop(); setPausedUi(); $("tResume").focus();}
+function resume(){if(!paused) return; pausedMs+=Date.now()-pauseAt; paused=false; setPausedUi(); metroApply(); $("tResume").blur();} // правильні натискання: {t: час, ch: символ}
 function startLesson(id){
-  L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[];
+  L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[]; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroApply();
 }
@@ -363,7 +378,7 @@ function metroApply(){
   $("metroOn").checked=s.metroOn; $("metroBpm").value=s.bpm; $("metroVal").textContent=s.bpm;
   document.querySelector(".metro").classList.toggle("off",!s.metroOn);
   metroStop();
-  if(s.metroOn&&!$("vTrain").hidden){metroBeat(); metroTimer=setInterval(metroBeat,60000/s.bpm);}
+  if(s.metroOn&&!$("vTrain").hidden&&!paused){metroBeat(); metroTimer=setInterval(metroBeat,60000/s.bpm);}
 }
 $("metroOn").addEventListener("change",e=>{state.settings.metroOn=e.target.checked; save(); metroApply(); e.target.blur();});
 $("metroBpm").addEventListener("input",e=>{state.settings.bpm=Number(e.target.value); $("metroVal").textContent=e.target.value; save(); metroApply();});
@@ -416,12 +431,14 @@ function renderLine(){
 function updStats(){
   $("sErr").textContent=errs;
   $("sAcc").textContent=typed?Math.max(0,Math.floor(100*(typed-errs)/typed)):100;
-  const min=t0?(Date.now()-t0)/60000:0;
+  const min=elapsed()/60000;
   $("sCpm").textContent=min>0.05?Math.round((typed-errs)/min):0;
 }
 const isCyr=c=>/[а-яіїєґё]/i.test(c), isLat=c=>/[a-z]/i.test(c);
 document.addEventListener("keydown",e=>{
   if($("vTrain").hidden||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key==="Escape"){e.preventDefault(); paused?resume():pause(); return;}
+  if(paused){if(e.key==="Enter"){e.preventDefault(); resume();} else if(e.key.length===1) e.preventDefault(); return;}
   if(e.key.length!==1) return;
   e.preventDefault();
   const want=L.lines[li][pos], got=e.key.toLowerCase();
@@ -442,12 +459,15 @@ document.addEventListener("keydown",e=>{
   else{errs++; const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
-$("tBack").onclick=()=>{clearInterval(timer); metroStop(); renderList(); show("vList");};
+$("tBack").onclick=()=>{clearInterval(timer); metroStop(); paused=false; setPausedUi(); renderList(); show("vList");};
+$("tPause").onclick=()=>{pause(); };
+$("tResume").onclick=()=>resume();
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause();});
 
 /* ---------- результат ---------- */
 function finish(){
   clearInterval(timer); metroStop();
-  const sec=Math.max(1,Math.round((Date.now()-t0)/1000));
+  const sec=Math.max(1,Math.round(elapsed()/1000));
   const acc=Math.max(0,Math.floor(100*(typed-errs)/typed));
   const cpm=Math.round((typed-errs)/(sec/60));
   const stars=acc>=97?3:acc>=90?2:1;
