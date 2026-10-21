@@ -217,5 +217,108 @@ window.LESSONS = [
       "a lad has a flag",
       "glad dad had a salad"
     ]
+  },
+  {
+    id: "en3", group: "Англійська розкладка: верхній ряд", layout: "en",
+    title: "English 3. Вказівні йдуть нагору", keys: "R T U Y", newKeys: ["r","t","u","y"],
+    intro: "Лівий вказівний тягнеться з <b>F</b> нагору на <b>R</b> та <b>T</b>, правий — з <b>J</b> на <b>U</b> та <b>Y</b>. Натиснув — і одразу повернувся на горбочок!",
+    lines: [
+      "asdfg hjkl; asdfg hjkl;",
+      "frf frf ftf ftf juj juj jyj jyj",
+      "fr ft ju jy fr ft ju jy",
+      "r t u y r t u y y u t r",
+      "art hat rat try dry sad",
+      "dust star dark yard salt",
+      "lady duty study sugar shark",
+      "dad has a gray hat",
+      "a lady drags a rusty jar"
+    ]
+  },
+  {
+    id: "en4", group: "Англійська розкладка: верхній ряд", layout: "en",
+    title: "English 4. Середні та безіменні нагору", keys: "E W I O", newKeys: ["e","w","i","o"],
+    intro: "Середні пальці: з <b>D</b> на <b>E</b> і з <b>K</b> на <b>I</b>. Безіменні: з <b>S</b> на <b>W</b> і з <b>L</b> на <b>O</b>. Решта пальчиків лишаються вдома!",
+    lines: [
+      "frf ftf juj jyj art try",
+      "ded ded sws sws kik kik lol lol",
+      "de sw ki lo de sw ki lo",
+      "e w i o e w i o o i w e",
+      "we red low dog fish goat",
+      "white yellow flower water",
+      "house world horse light sweet",
+      "i like hot tea",
+      "the dog likes fish",
+      "the world is wide"
+    ]
+  },
+  {
+    id: "en5", group: "Англійська розкладка: верхній ряд", layout: "en",
+    title: "English 5. Мізинці нагору — весь верхній ряд", keys: "Q P", newKeys: ["q","p"],
+    intro: "Лівий мізинець: з <b>A</b> на <b>Q</b>. Правий мізинець: з <b>;</b> на <b>P</b>. Після цього уроку ти знаєш увесь верхній ряд!",
+    lines: [
+      "de sw ki lo fr ju",
+      "aqa aqa aqa ;p; ;p; ;p;",
+      "aq aq ;p ;p qp pq qp pq",
+      "q p q p p q p q",
+      "pig top shop stop pool park",
+      "apple paper purple happy puppy",
+      "quiet quite equal square tulip",
+      "the puppy is happy",
+      "a quiet pirate sleeps",
+      "i ate a purple apple"
+    ]
+  },
+  {
+    id: "en6", group: "Англійська розкладка: нижній ряд", layout: "en",
+    title: "English 6. Вказівні йдуть донизу", keys: "V B N M", newKeys: ["v","b","n","m"],
+    intro: "Лівий вказівний тягнеться з <b>F</b> донизу на <b>V</b> та <b>B</b>, правий — з <b>J</b> на <b>N</b> та <b>M</b>. Натиснув — і одразу повернувся на горбочок!",
+    lines: [
+      "aqa ;p; ded kik sws lol",
+      "fvf fvf fbf fbf jnj jnj jmj jmj",
+      "fv fb jn jm fv fb jn jm",
+      "v b n m v b n m m n b v",
+      "van bus man moon milk ten",
+      "bird bear lemon banana monkey",
+      "mother brother summer winter rainbow",
+      "my mother bakes bread",
+      "the monkey eats a banana",
+      "seven birds in the rain"
+    ]
+  },
+  {
+    id: "en7", group: "Англійська розкладка: нижній ряд", layout: "en",
+    title: "English 7. Середні та безіменні донизу", keys: "C X , .", newKeys: ["c","x",",","."],
+    intro: "Середні пальці: з <b>D</b> на <b>C</b> і з <b>K</b> на <b>,</b> (кому). Безіменні: з <b>S</b> на <b>X</b> і з <b>L</b> на <b>.</b> (крапку). В англійській розкладці кома — без Shift!",
+    lines: [
+      "fvf fbf jnj jmj van man",
+      "dcd dcd sxs sxs k,k k,k l.l l.l",
+      "dc sx k, l. dc sx k, l.",
+      "c x , . c x , . . , x c",
+      "cat cake box fox six city",
+      "music class picnic exit next",
+      "yes, i can.",
+      "we have six cookies.",
+      "i have a cat, a dog and a fox.",
+      "the taxi is next to the box."
+    ]
+  },
+  {
+    id: "en8", group: "Англійська розкладка: Z і великі літери", layout: "en", exact: true,
+    title: "English 8. Z і великі літери", keys: "Z Shift", newKeys: ["z","shiftL","shiftR"],
+    intro: "Лівий мізинець: з <b>A</b> донизу на <b>Z</b>. Велику літеру друкуємо так: <b>мізинцем іншої руки</b> затисни <b>Shift</b> і натисни літеру. Caps Lock не вмикаємо!",
+    lines: [
+      "dcd sxs k,k l.l cat, box.",
+      "aza aza aza za za za",
+      "zoo zebra pizza lazy zero",
+      "A A A S S S D D D F F F",
+      "J J J K K K L L L O O O",
+      "Aa Ss Dd Ff Jj Kk Ll",
+      "Anna Tom Kate Max Zoe",
+      "London Paris Kyiv Ukraine",
+      "My name is Anna.",
+      "I live in Kyiv, Ukraine.",
+      "Tom has a lazy zebra.",
+      "We like pizza, ice cream and juice."
+    ]
   }
 ];
