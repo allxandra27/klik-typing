@@ -94,6 +94,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .key.dim{opacity:.35}
 .key.new{border-color:var(--ink);border-style:dashed}
 .key.target{border-color:var(--ink);border-style:solid;box-shadow:0 0 0 4px var(--pop);transform:translateY(-2px)}
+.row.r3{padding-left:0}
+.key.shift{background:var(--f-pinky);text-transform:none;font-size:clamp(14px,calc(var(--kw)*.5),22px)}
+.key.shift.sl{width:calc(var(--kw)*.75)} .key.shift.sr{width:calc(var(--kw)*.9)}
 .space{width:calc(var(--kw)*6);background:var(--f-thumb);margin-left:calc(var(--kw)*3);text-transform:none;font-size:14px;color:var(--muted)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -270,8 +273,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211301"></script>
-<script src="lessons.js?v=202610211301"></script>
+<script src="config.js?v=202610211309"></script>
+<script src="lessons.js?v=202610211309"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -282,7 +285,10 @@ const LAYOUT={
 const FCOL=["pinky","ring","middle","index","index","index","index","middle","ring","pinky","pinky","pinky"];
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
+const baseKey=(layout,ch)=>layout==="ua"&&ch===","?".":ch.toLowerCase();
+const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||(layout==="ua"&&ch===",");
 function keyInfo(layout,ch){
+  ch=baseKey(layout,ch);
   const rows=LAYOUT[layout];
   for(let r=0;r<rows.length;r++){const c=rows[r].indexOf(ch); if(c>=0) return {r,c,finger:FCOL[c],hand:c<=4?"лівим":"правим"};}
   return null;
@@ -378,11 +384,14 @@ function rhythmStats(){
   return {gaps,median,slow,rhythm:Math.max(0,Math.min(100,Math.round(100*(1-sd/mean)))),tempo:Math.round(60000/mean)};
 }
 function buildKb(){
-  const allowed=new Set(L.lines.join("").replace(/ /g,"").split(""));
+  const text=L.lines.join("").replace(/ /g,"");
+  const allowed=new Set([...text].map(c=>baseKey(L.layout,c)));
+  const usesShift=[...text].some(c=>needsShift(L.layout,c));
   const neu=new Set(L.newKeys||[]);
-  $("kb").innerHTML=LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${row.map((ch,c)=>{
+  const sh=(id,cls)=>`<div class="key shift ${cls}${usesShift?"":" dim"}${neu.has(id)?" new":""}" data-ch="${id}" title="Shift">⇧</div>`;
+  $("kb").innerHTML=LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map((ch,c)=>{
       const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
-      return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`}).join("")}</div>`).join("")+
+      return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`}).join("")}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
     `<div class="row"><div class="key space" data-ch=" ">пробіл</div></div>`;
 }
 function renderLine(){
@@ -394,9 +403,15 @@ function renderLine(){
   $("pBar").style.width=(100*doneChars/total)+"%";
   const ch=line[pos];
   document.querySelectorAll(".key.target").forEach(k=>k.classList.remove("target"));
-  const k=document.querySelector(`.key[data-ch="${CSS.escape(ch)}"]`); if(k)k.classList.add("target");
-  if(ch===" ") $("fingerHint").textContent="Пробіл — великим пальцем";
-  else {const info=keyInfo(L.layout,ch); $("fingerHint").textContent=info?`Натисни «${ch.toUpperCase()}» ${info.hand} ${FNAME[info.finger]}`:"";}
+  const k=document.querySelector(`.key[data-ch="${CSS.escape(baseKey(L.layout,ch))}"]`); if(k)k.classList.add("target");
+  if(ch===" ") {$("fingerHint").textContent="Пробіл — великим пальцем"; return;}
+  const info=keyInfo(L.layout,ch); if(!info){$("fingerHint").textContent=""; return;}
+  if(needsShift(L.layout,ch)){
+    // Shift натискаємо мізинцем протилежної руки
+    const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
+    const name=ch===","?"кому":`«${ch}»`;
+    $("fingerHint").textContent=`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${name} натисни ${info.hand} ${FNAME[info.finger]}`;
+  } else $("fingerHint").textContent=`Натисни «${ch.toUpperCase()}» ${info.hand} ${FNAME[info.finger]}`;
 }
 function updStats(){
   $("sErr").textContent=errs;
@@ -415,10 +430,15 @@ document.addEventListener("keydown",e=>{
     $("warn").textContent=L.layout==="ua"?"Увімкнена не та мова! Перемкни на УКР: Alt + Shift або Win + Пробіл":"Увімкнена не та мова! Перемкни на ENG: Alt + Shift або Win + Пробіл";
     $("warn").hidden=false; return;
   }
+  // у уроках з великими літерами регістр має значення; Caps Lock — не Shift
+  const exact=L.exact||needsShift(L.layout,want);
+  if(exact&&e.getModifierState&&e.getModifierState("CapsLock")){
+    $("warn").textContent="Вимкни Caps Lock! Великі літери друкуємо із затиснутим Shift."; $("warn").hidden=false; return;
+  }
   $("warn").hidden=true;
   if(!t0){t0=Date.now(); timer=setInterval(updStats,1000);}
   typed++;
-  if(got===want){hits.push({t:performance.now(),ch:want}); pos++; if(pos>=L.lines[li].length){li++; pos=0; if(li>=L.lines.length){finish();return;}}}
+  if((exact?e.key:got)===want){hits.push({t:performance.now(),ch:want}); pos++; if(pos>=L.lines[li].length){li++; pos=0; if(li>=L.lines.length){finish();return;}}}
   else{errs++; const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
