@@ -15,11 +15,12 @@
   --display:"Unbounded","Arial Black",system-ui,sans-serif;
   --body:"Nunito","Segoe UI",system-ui,sans-serif;
   --mono:"Courier New",ui-monospace,monospace;
+  --s1:#2a78d6; --s2:#eb6834; --heat:#eb6834;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F1530; --surface:#18204A; --ink:#AFC6FF; --fg:#E8EDFF; --muted:#9AA6CC; --line:#34437F; --fill:#26326A;
   --pop:#F5B83D; --pop-ink:#2B1C00; --ok:#5CC28B; --bad:#FF7A72; --pink:#8A4A5C;
-  --f-pinky:#3B3366; --f-ring:#27406A; --f-middle:#28503A; --f-index:#5A4A22; --f-thumb:#2B3352; color-scheme:dark}}
+  --f-pinky:#3B3366; --f-ring:#27406A; --f-middle:#28503A; --f-index:#5A4A22; --f-thumb:#2B3352; --s1:#3987e5; --s2:#d95926; --heat:#d95926; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.5}
@@ -186,6 +187,67 @@ button{font:inherit;color:inherit;cursor:pointer}
 .nokb .klik{width:56px;height:56px}
 .nokb p{margin:0}
 .nokb b{color:var(--bad)}
+
+/* ---------- мій прогрес ---------- */
+.listbar{display:flex;justify-content:flex-end;margin:-6px 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:8px 0 6px}
+.tile{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:2px}
+.tile b{font-family:var(--display);font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
+.tile span{color:var(--muted);font-size:14px;line-height:1.3}
+.psec{font-size:17px;margin:26px 0 10px}
+.pathgroup{margin-bottom:12px}
+.pathname{font-weight:800;color:var(--muted);font-size:14px;margin-bottom:6px}
+.path{display:flex;align-items:center;flex-wrap:wrap;gap:4px 0}
+.path .link{width:14px;height:3px;background:var(--line);border-radius:2px}
+.node{display:grid;justify-items:center;gap:2px;background:none;border:none;padding:2px 4px;min-width:64px}
+.node .dot{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;border:3px solid var(--line);background:var(--surface);color:var(--muted)}
+.node .nkeys{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--muted)}
+.node .nstars{color:var(--pop);font-size:13px;letter-spacing:1px} .node .nstars .off{color:var(--line)}
+.node.done .dot{border-color:var(--ok);color:var(--ok)}
+.node.open .dot{border-color:var(--ink);color:var(--ink)}
+.node.current .dot{background:var(--pop);border-color:var(--pop);color:var(--pop-ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--pop) 35%,transparent)}
+.node.locked{opacity:.5;cursor:not-allowed}
+.node:not(:disabled):hover .dot{transform:translateY(-2px)}
+.pgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-weight:700}
+.pgrow select{font:inherit;font-size:15px;padding:5px 10px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--fg);max-width:100%}
+.pnote{color:var(--muted);font-size:14px;font-weight:600}
+.seg{display:inline-flex;gap:6px}
+.chip{border:2px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 14px;font-weight:700;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.chart{margin:0;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 12px 6px;min-width:0}
+.chart:empty{display:none}
+.chart figcaption{font-weight:800;color:var(--fg);font-size:15px;margin-bottom:4px}
+.chart figcaption small{color:var(--muted);font-weight:600}
+.chart .plot{position:relative}
+.chart svg{display:block;width:100%;height:auto;max-width:100%}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .tick{fill:var(--muted);font-size:13px;font-family:var(--body)}
+.chart .dl{fill:var(--fg);font-size:14px;font-weight:700;font-family:var(--body)}
+.chart .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .pt{stroke:var(--surface);stroke-width:2}
+.chart .xhair{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.chart .hit{fill:transparent;cursor:crosshair}
+.chart .tip{position:absolute;top:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.15);pointer-events:none;white-space:nowrap;color:var(--fg)}
+.chart .tip i,.legend2 i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:0}
+.legend2{display:flex;gap:14px;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.ptable{margin-top:10px}
+.ptable summary{cursor:pointer;font-weight:800;color:var(--ink);font-size:15px}
+.tablewrap{overflow-x:auto;margin-top:8px}
+.ptable table{border-collapse:collapse;font-size:14px;min-width:560px;width:100%;font-variant-numeric:tabular-nums}
+.ptable th,.ptable td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+.ptable th{color:var(--muted);font-weight:800}
+.ptable td:nth-child(3){color:var(--pop)}
+.kb.heat .key{background:var(--surface);cursor:help}
+.kb.heat .key.nodata{border-style:dashed;color:var(--muted);opacity:.6}
+.heatlegend{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:8px}
+.heatlegend i{width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--heat) 12%,var(--surface)),var(--heat))}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.badge{display:grid;gap:2px;background:var(--surface);border:2px dashed var(--line);border-radius:14px;padding:12px;opacity:.6}
+.badge .bic{font-size:28px;line-height:1}
+.badge b{color:var(--fg);font-size:15px}
+.badge span:last-child{font-size:13px;color:var(--muted);line-height:1.3}
+.badge.got{opacity:1;border-style:solid;border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 25%,transparent)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -216,6 +278,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vList" hidden>
     <div class="say"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <div class="bubble" id="listBubble"></div></div>
+    <div class="listbar"><button class="btn primary" id="btnProgress">📈 Мій прогрес</button></div>
     <div class="nokb" id="noKbList" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div id="lessonGroups"></div>
@@ -270,6 +333,38 @@ button{font:inherit;color:inherit;cursor:pointer}
     </div>
   </section>
 
+  <!-- мій прогрес -->
+  <section id="vProgress" hidden>
+    <div class="bar"><h2>Мій прогрес</h2><button class="btn small" id="pBack">← До уроків</button></div>
+    <div class="tiles" id="pTiles"></div>
+    <h3 class="psec">Мій шлях</h3>
+    <div id="pPath"></div>
+    <h3 class="psec">Як я росту</h3>
+    <div class="pgrow">
+      <label for="pLesson">Урок:</label> <select id="pLesson"></select>
+      <span class="pnote" id="pGrowNote"></span>
+    </div>
+    <div class="charts">
+      <figure class="chart" id="chSpeed"></figure>
+      <figure class="chart" id="chAcc"></figure>
+    </div>
+    <details class="ptable"><summary>Показати всі спроби таблицею</summary><div id="pTable"></div></details>
+    <h3 class="psec">Найважчі клавіші</h3>
+    <div class="pgrow">
+      <span class="seg" role="group" aria-label="Що показувати">
+        <button class="chip" id="hmErr" aria-pressed="true">Помилки</button><button class="chip" id="hmSlow" aria-pressed="false">Затримки</button>
+      </span>
+      <span class="seg" role="group" aria-label="Розкладка">
+        <button class="chip" id="hmUa" aria-pressed="true">Українська</button><button class="chip" id="hmEn" aria-pressed="false">English</button>
+      </span>
+    </div>
+    <div class="kb heat" id="pHeat"></div>
+    <div class="heatlegend"><span>менше</span><i></i><span>більше</span></div>
+    <p class="pnote" id="pHeatNote"></p>
+    <h3 class="psec">Досягнення</h3>
+    <div class="badges" id="pBadges"></div>
+  </section>
+
   <!-- результат -->
   <section id="vResult" hidden>
     <div class="card result">
@@ -291,7 +386,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         <div class="bars" id="rBars"></div>
         <div class="rhythm-slow" id="rSlow"></div>
       </div>
-      <div class="actions"><button class="btn" id="rAgain">Ще раз</button><button class="btn primary" id="rNext">Наступний урок</button><button class="btn" id="rList">До уроків</button></div>
+      <div class="actions"><button class="btn" id="rAgain">Ще раз</button><button class="btn primary" id="rNext">Наступний урок</button><button class="btn" id="rList">До уроків</button><button class="btn" id="rProgress">📈 Мій прогрес</button></div>
       <div class="sync" id="rSync"></div>
     </div>
   </section>
@@ -314,8 +409,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211413"></script>
-<script src="lessons.js?v=202610211413"></script>
+<script src="config.js?v=202610211428"></script>
+<script src="progress.js?v=202610211428" defer></script>
+<script src="lessons.js?v=202610211428"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -343,7 +439,7 @@ function save(){try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
 
 /* ---------- екрани ---------- */
 const $=id=>document.getElementById(id);
-const views=["vLogin","vList","vTrain","vResult"];
+const views=["vLogin","vList","vTrain","vResult","vProgress"];
 function show(v){views.forEach(x=>$(x).hidden=x!==v); $("who").hidden=!state.student; if(state.student) $("whoName").textContent=`${state.student.name}, ${state.student.cls}`; window.scrollTo(0,0);}
 
 /* вхід */
@@ -353,7 +449,7 @@ $("btnLogin").onclick=()=>{
   state.student={name,cls}; save(); renderList(); show("vList");
 };
 [$("inName"),$("inClass")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{state.student=null; state.lessons={}; save(); metroStop(); $("inName").value=""; $("inClass").value=""; show("vLogin"); $("inName").focus();};
+$("logout").onclick=()=>{state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inName").value=""; $("inClass").value=""; show("vLogin"); $("inName").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -551,12 +647,12 @@ document.addEventListener("keydown",e=>{
   if(!t0){t0=Date.now(); timer=setInterval(updStats,1000);}
   typed++;
   if((exact?e.key:got)===want){
-    const now=performance.now(); hits.push({t:now,ch:want});
+    const now=performance.now(); hits.push({t:now,ch:want}); window.recordKey&&recordKey(L.layout,want,true);
     if(metroOnNow()){
       const ok=onBeat(now); if(ok!==null){beatTotal++; if(ok) beatHits++;} lineBeat[pos]=ok;
     }
     pos++; if(pos>=L.lines[li].length){li++; pos=0; lineBeat=[]; if(li>=L.lines.length){finish();return;}}}
-  else{errs++; const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
+  else{errs++; window.recordKey&&recordKey(L.layout,want,false); const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
 $("tBack").onclick=()=>{clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
@@ -597,6 +693,7 @@ function finish(){
     $("rTempo").textContent=`${R.tempo}/${bpm}`; $("rTempoLbl").textContent="твій темп / метроном, уд/хв";
     if(Math.abs(R.tempo-bpm)/bpm<=0.15) $("rMsg").innerHTML+="<br>І чудово тримаєш темп метронома! 🚦";
   }
+  window.recordAttempt&&recordAttempt({id:L.id,ts:Date.now(),acc,cpm,errs,sec,stars,rhythm:R?R.rhythm:null,beat:beatTotal?Math.round(100*beatHits/beatTotal):null},R);
   show("vResult");
   sendResult({lesson:L.id,title:L.title,stars,accuracy:acc,cpm,errors:errs,seconds:sec,
     rhythm:R?R.rhythm:"",metronome:bpm||"",tempo:R&&bpm?R.tempo:""});
