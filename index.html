@@ -120,16 +120,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lamp.on{background:#ff3b30;border-color:#c1271f;box-shadow:0 0 16px 6px rgba(255,59,48,.75)}
 .metro-hint{font-size:14px;font-weight:600}
 .metro select{font:inherit;font-size:15px;padding:4px 8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--fg)}
-.metro.off select,.metro.mode-pacer .lamp,.metro.mode-pulse .lamp{display:none}
-.pace{font-weight:800;margin:-2px 0 8px;font-size:15px}
-.pace.near{color:var(--ok)} .pace.behind{color:var(--bad)} .pace.ahead{color:#b26b00}
-/* «Біжить Клік»: позначка над буквою, на якій зараз Клік */
-.strip span{position:relative}
-.strip .ghost{outline:3px dashed var(--bad);outline-offset:2px}
-.strip .ghost::before{content:"▼";position:absolute;left:50%;top:-1.05em;transform:translateX(-50%);font-size:.45em;color:var(--bad);line-height:1}
-/* «Пульс букви» */
-.strip .cur.beat{animation:beat .22s ease-out}
-@keyframes beat{0%{transform:scale(1.45);box-shadow:0 0 0 6px var(--bad)}100%{transform:scale(1)}}
+.metro.off select,.metro.mode-bounce .lamp{display:none}
+.stripwrap{position:relative}
+.strip.bouncing{padding-top:58px}
+.ball{position:absolute;left:0;top:0;width:30px;height:30px;pointer-events:none;transition:left .12s ease-out;transform-origin:50% 100%;z-index:2}
 /* влучання в такт */
 .strip .done.offbeat{color:#c77700}
 .strip .done.onbeat{color:var(--ok)}
@@ -241,14 +235,12 @@ button{font:inherit;color:inherit;cursor:pointer}
         <b id="metroVal">60</b>&nbsp;уд/хв
       </span>
       <select id="metroMode" aria-label="Режим метронома">
-        <option value="pacer">Біжить Клік</option>
-        <option value="pulse">Пульс букви</option>
+        <option value="bounce">Стрибаючий Клік</option>
         <option value="lamp">Лампочка</option>
       </select>
       <span class="lamp" id="lamp" aria-hidden="true"></span>
       <span class="metro-hint" id="metroHint"></span>
     </div>
-    <div class="pace" id="paceInfo" hidden></div>
     <div class="nokb" id="noKbTrain" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div class="warn" id="warn" hidden></div>
@@ -261,7 +253,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div><b>Перерва!</b> Час зупинено, натискання не рахуються. Відпочинь і продовж, коли будеш готовий.</div>
       <button class="btn primary" id="tResume">▶ Продовжити</button>
     </div>
-    <div class="strip" id="strip" aria-live="polite"></div>
+    <div class="stripwrap"><div class="strip" id="strip" aria-live="polite"></div><svg class="ball klik" id="ball" viewBox="0 0 260 260" aria-hidden="true" hidden><use href="#klik"/></svg></div>
     <div class="next-line" id="nextLine"></div>
     <div class="hintline" id="fingerHint"></div>
     <div class="kb" id="kb" aria-hidden="true"></div>
@@ -316,8 +308,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211335"></script>
-<script src="lessons.js?v=202610211335"></script>
+<script src="config.js?v=202610211347"></script>
+<script src="lessons.js?v=202610211347"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -429,52 +421,49 @@ document.addEventListener("keydown",e=>{if(!hasKb&&e.key&&e.key!=="Unidentified"
 kbNotice();
 
 /* ---------- метроном (беззвучний, лампочка) ---------- */
-state.settings=Object.assign({metroOn:false,bpm:60,metroMode:"pacer"},state.settings||{});
-let metroTimer=null, lampTimer=null, paceTimer=null;
-// Сітка тактів: удари в моменти grid.start + k·інтервал (performance.now). Для «Біжить Клік» сітка
-// починається з першого правильного натискання, і з цього ж моменту Клік «друкує» по букві на кожен удар.
-let grid=null; // {start, base}  base — скільки знаків учень уже надрукував на старті сітки
+state.settings=Object.assign({metroOn:false,bpm:60,metroMode:"bounce"},state.settings||{});
+let metroTimer=null, lampTimer=null, ballRaf=null;
+// Сітка тактів: удари в моменти grid.start + k·інтервал (performance.now).
+let grid=null;
 let beatHits=0, beatTotal=0; // влучання в такт за урок
-const MODE_HINT={pacer:"Не відставай від Кліка й не обганяй його",pulse:"Натискай, коли буква «підстрибує»",lamp:"Натискай клавішу щоразу, коли блимає лампочка"};
+const MODE_HINT={bounce:"Натискай клавішу, коли Клік приземляється на букву",lamp:"Натискай клавішу щоразу, коли блимає лампочка"};
 const metroOnNow=()=>state.settings.metroOn&&!$("vTrain").hidden&&!paused&&!counting;
 const beatMs=()=>60000/state.settings.bpm;
-function metroStop(){clearInterval(metroTimer); clearInterval(paceTimer); clearTimeout(lampTimer); metroTimer=paceTimer=null; $("lamp").classList.remove("on");}
-function metroBeat(){
-  if(state.settings.metroMode==="lamp"){const l=$("lamp"); l.classList.add("on"); clearTimeout(lampTimer); lampTimer=setTimeout(()=>l.classList.remove("on"),Math.min(150,30000/state.settings.bpm));}
-  else if(state.settings.metroMode==="pulse"){const c=document.querySelector("#strip .cur"); if(c){c.classList.remove("beat"); void c.offsetWidth; c.classList.add("beat");}}
+function metroStop(){clearInterval(metroTimer); clearTimeout(lampTimer); cancelAnimationFrame(ballRaf); metroTimer=ballRaf=null; $("lamp").classList.remove("on"); $("ball").toggleAttribute("hidden",true);}
+function metroBeat(){const l=$("lamp"); l.classList.add("on"); clearTimeout(lampTimer); lampTimer=setTimeout(()=>l.classList.remove("on"),Math.min(150,30000/state.settings.bpm));}
+// «Стрибаючий Клік»: завжди над поточною буквою; приземляється на неї точно в момент удару.
+// Його видно в польоті, тож удар можна передбачити. Нікуди не тікає, якщо учень запізнився.
+const BALL=30, JUMP=40;
+function ballFrame(){
+  const b=$("ball"), cur=document.querySelector("#strip .cur");
+  if(!metroOnNow()||state.settings.metroMode!=="bounce"||!cur||!grid){b.toggleAttribute("hidden",true); ballRaf=null; return;}
+  const w=b.parentElement.getBoundingClientRect(), r=cur.getBoundingClientRect();
+  const p=(((performance.now()-grid.start)%beatMs())+beatMs())%beatMs()/beatMs(); // 0 — удар
+  const h=JUMP*4*p*(1-p);                       // парабола: угорі посередині такту, внизу — на ударі
+  const squash=(p<0.07||p>0.96)?" scale(1.15,.8)":"";
+  b.toggleAttribute("hidden",false); // у SVG немає властивості hidden, тож керуємо атрибутом
+  b.style.left=(r.left-w.left+r.width/2-BALL/2)+"px";
+  b.style.top=(r.top-w.top-BALL+4)+"px";
+  b.style.transform=`translateY(${-h}px)${squash}`;
+  ballRaf=requestAnimationFrame(ballFrame);
 }
 function metroApply(){
   const s=state.settings;
+  if(!MODE_HINT[s.metroMode]) s.metroMode="bounce";
   $("metroOn").checked=s.metroOn; $("metroBpm").value=s.bpm; $("metroVal").textContent=s.bpm; $("metroMode").value=s.metroMode;
   const box=document.querySelector(".metro"); box.classList.toggle("off",!s.metroOn);
-  ["pacer","pulse","lamp"].forEach(m=>box.classList.toggle("mode-"+m,s.metroMode===m));
+  ["bounce","lamp"].forEach(m=>box.classList.toggle("mode-"+m,s.metroMode===m));
   $("metroHint").textContent=MODE_HINT[s.metroMode];
-  metroStop(); grid=null; renderGhost();
+  $("strip").classList.toggle("bouncing",s.metroOn&&s.metroMode==="bounce");
+  metroStop(); grid=null;
   if(!metroOnNow()) return;
-  if(s.metroMode==="pacer"){paceTimer=setInterval(renderGhost,60);}
-  else {grid={start:performance.now(),base:null}; metroBeat(); metroTimer=setInterval(metroBeat,beatMs());}
+  grid={start:performance.now()};
+  if(s.metroMode==="bounce") ballRaf=requestAnimationFrame(ballFrame);
+  else {metroBeat(); metroTimer=setInterval(metroBeat,beatMs());}
 }
-const doneAbs=()=>L.lines.slice(0,li).reduce((a,x)=>a+x.length,0)+pos;
-// Скільки знаків уже «надрукував» Клік
-function ghostDone(){ if(!grid||grid.base==null) return null; return Math.min(L.lines.reduce((a,x)=>a+x.length,0), grid.base+1+Math.floor((performance.now()-grid.start)/beatMs())); }
-function renderGhost(){
-  document.querySelectorAll("#strip .ghost").forEach(x=>x.classList.remove("ghost"));
-  const info=$("paceInfo");
-  if(!L||!state.settings.metroOn||state.settings.metroMode!=="pacer"||$("vTrain").hidden){info.hidden=true; return;}
-  info.hidden=false;
-  const g=ghostDone();
-  if(g==null){info.className="pace near"; info.textContent="Клік чекає на старті — почни друкувати, і він побіжить поруч"; return;}
-  const lineStart=L.lines.slice(0,li).reduce((a,x)=>a+x.length,0), spans=document.querySelectorAll("#strip span");
-  if(g>=lineStart&&g<lineStart+spans.length) spans[g-lineStart].classList.add("ghost");
-  const d=doneAbs()-g;
-  if(Math.abs(d)<=1){info.className="pace near"; info.textContent="Йдеш поруч із Кліком 👍";}
-  else if(d<0){info.className="pace behind"; info.textContent=`Клік попереду на ${-d} ${plural(-d)} — наздоганяй!`;}
-  else {info.className="pace ahead"; info.textContent=`Ти попереду Кліка на ${d} ${plural(d)} — трохи повільніше`;}
-}
-const plural=n=>{const a=n%10,b=n%100; return a===1&&b!==11?"букву":a>=2&&a<=4&&(b<12||b>14)?"букви":"букв";};
 // Чи влучило натискання в такт (допуск ±22% інтервалу)
 function onBeat(t){
-  if(!grid||grid.base==null&&state.settings.metroMode==="pacer") return null;
+  if(!grid) return null;
   const I=beatMs(), off=((t-grid.start)%I+I)%I;
   return Math.min(off,I-off)<=I*0.22;
 }
@@ -511,7 +500,6 @@ function buildKb(){
 function renderLine(){
   const line=L.lines[li];
   $("strip").innerHTML=[...line].map((ch,i)=>`<span class="${i<pos?"done"+(lineBeat[i]===true?" onbeat":lineBeat[i]===false?" offbeat":""):i===pos?"cur"+(ch===" "?" sp":""):"todo"}">${ch===" "?"&nbsp;":ch}</span>`).join("");
-  renderGhost();
   $("nextLine").textContent=L.lines[li+1]?`Далі: ${L.lines[li+1]}`:"Це останній рядок!";
   $("sLine").textContent=li+1;
   const total=L.lines.reduce((a,s)=>a+s.length,0), doneChars=L.lines.slice(0,li).reduce((a,s)=>a+s.length,0)+pos;
@@ -559,7 +547,6 @@ document.addEventListener("keydown",e=>{
   if((exact?e.key:got)===want){
     const now=performance.now(); hits.push({t:now,ch:want});
     if(metroOnNow()){
-      if(state.settings.metroMode==="pacer"&&!grid) grid={start:now,base:doneAbs()};
       const ok=onBeat(now); if(ok!==null){beatTotal++; if(ok) beatHits++;} lineBeat[pos]=ok;
     }
     pos++; if(pos>=L.lines[li].length){li++; pos=0; lineBeat=[]; if(li>=L.lines.length){finish();return;}}}
