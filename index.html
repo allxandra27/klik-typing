@@ -168,15 +168,14 @@ button{font:inherit;color:inherit;cursor:pointer}
   .result .klik{width:84px;height:84px}
   .bar h2{font-size:16px}
 }
-.pausebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:3px solid var(--pop);border-radius:16px;padding:14px 16px;margin:6px 0 10px}
+.overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,21,48,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.pausebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:560px;background:var(--surface);border:3px solid var(--pop);border-radius:18px;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .pausebox .klik{width:56px;height:56px}
 .pausebox div{flex:1;min-width:200px}
 .pausebox b{color:var(--ink);font-family:var(--display)}
-.paused .strip,.paused .kb,.paused .next-line,.paused .hintline{opacity:.35;filter:grayscale(.6)}
-.counting .strip,.counting .next-line,.counting .hintline{opacity:.35}
-.countbox{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;background:var(--surface);border:3px solid var(--ink);border-radius:16px;padding:14px 18px;margin:6px 0 10px;text-align:left}
+.countbox{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;max-width:560px;background:var(--surface);border:3px solid var(--ink);border-radius:18px;padding:20px 26px;text-align:left;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .countbox b{font-family:var(--mono);font-size:22px;color:var(--ink);letter-spacing:.08em}
-.countnum{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;color:var(--ink);min-width:1.2em;text-align:center}
+.countnum{font-family:var(--display);font-weight:700;font-size:84px;line-height:1;color:var(--ink);min-width:1.2em;text-align:center}
 .countnum.go{color:var(--ok);font-size:44px}
 .countnum.pop{animation:pop .35s ease-out}
 @keyframes pop{from{transform:scale(1.6);opacity:.3}to{transform:scale(1);opacity:1}}
@@ -244,14 +243,19 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="nokb" id="noKbTrain" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div class="warn" id="warn" hidden></div>
-    <div class="countbox" id="countBox" hidden>
-      <div class="countnum" id="countNum">3</div>
-      <div>Постав пальчики на основну позицію:<br><b id="countHome">Ф І В А — О Л Д Ж</b><br>Великі пальці — на пробілі.</div>
+    <!-- відлік і пауза — поверх сторінки, щоб рядок друку не зсувався -->
+    <div class="overlay" id="countBox" hidden>
+      <div class="countbox">
+        <div class="countnum" id="countNum">5</div>
+        <div>Постав пальчики на основну позицію:<br><b id="countHome">Ф І В А — О Л Д Ж</b><br>Великі пальці — на пробілі.</div>
+      </div>
     </div>
-    <div class="pausebox" id="pauseBox" hidden>
-      <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
-      <div><b>Перерва!</b> Час зупинено, натискання не рахуються. Відпочинь і продовж, коли будеш готовий.</div>
-      <button class="btn primary" id="tResume">▶ Продовжити</button>
+    <div class="overlay" id="pauseBox" hidden>
+      <div class="pausebox">
+        <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
+        <div><b>Перерва!</b> Час зупинено, натискання не рахуються. Відпочинь і продовж, коли будеш готовий.</div>
+        <button class="btn primary" id="tResume">▶ Продовжити</button>
+      </div>
     </div>
     <div class="stripwrap"><div class="strip" id="strip" aria-live="polite"></div><svg class="ball klik" id="ball" viewBox="0 0 260 260" aria-hidden="true" hidden><use href="#klik"/></svg></div>
     <div class="next-line" id="nextLine"></div>
@@ -308,8 +312,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211347"></script>
-<script src="lessons.js?v=202610211347"></script>
+<script src="config.js?v=202610211401"></script>
+<script src="lessons.js?v=202610211401"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -409,7 +413,7 @@ function startLesson(id){
   L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
-  countdown(COUNT,()=>metroApply());
+  countdown(COUNT,()=>metroApply()); metroApply(); // одразу показати налаштування метронома (відступ для Кліка), щоб після «Старт!» нічого не зсунулося
 }
 
 /* ---------- пристрій без клавіатури (телефон) ---------- */

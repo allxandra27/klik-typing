@@ -9,5 +9,5 @@ window.KLIK_CONFIG = {
   unlockStars: 2,
 
   // Відлік перед початком уроку (секунди), щоб учень встиг поставити руки. 0 — без відліку.
-  countdown: 3
+  countdown: 5
 };
