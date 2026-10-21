@@ -165,6 +165,14 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pausebox div{flex:1;min-width:200px}
 .pausebox b{color:var(--ink);font-family:var(--display)}
 .paused .strip,.paused .kb,.paused .next-line,.paused .hintline{opacity:.35;filter:grayscale(.6)}
+.counting .strip,.counting .next-line,.counting .hintline{opacity:.35}
+.countbox{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;background:var(--surface);border:3px solid var(--ink);border-radius:16px;padding:14px 18px;margin:6px 0 10px;text-align:left}
+.countbox b{font-family:var(--mono);font-size:22px;color:var(--ink);letter-spacing:.08em}
+.countnum{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;color:var(--ink);min-width:1.2em;text-align:center}
+.countnum.go{color:var(--ok);font-size:44px}
+.countnum.pop{animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(1.6);opacity:.3}to{transform:scale(1);opacity:1}}
+.key.homeglow{border-color:var(--ok);border-style:solid;box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 45%,transparent)}
 .nokb{display:flex;gap:12px;align-items:center;background:var(--surface);border:2px solid var(--bad);border-radius:16px;padding:12px 14px;margin:6px 0 12px}
 .nokb .klik{width:56px;height:56px}
 .nokb p{margin:0}
@@ -224,6 +232,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="nokb" id="noKbTrain" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div class="warn" id="warn" hidden></div>
+    <div class="countbox" id="countBox" hidden>
+      <div class="countnum" id="countNum">3</div>
+      <div>Постав пальчики на основну позицію:<br><b id="countHome">Ф І В А — О Л Д Ж</b><br>Великі пальці — на пробілі.</div>
+    </div>
     <div class="pausebox" id="pauseBox" hidden>
       <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <div><b>Перерва!</b> Час зупинено, натискання не рахуються. Відпочинь і продовж, коли будеш готовий.</div>
@@ -283,8 +295,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211318"></script>
-<script src="lessons.js?v=202610211318"></script>
+<script src="config.js?v=202610211322"></script>
+<script src="lessons.js?v=202610211322"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -348,16 +360,42 @@ $("lessonGroups").addEventListener("click",e=>{const b=e.target.closest(".lesson
 
 /* ---------- тренування ---------- */
 let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false;
-let hits=[];
+let hits=[]; // правильні натискання: {t: час, ch: символ}
 let paused=false, pausedMs=0, pauseAt=0; // час на паузі не рахується
 const elapsed=()=>t0?(Date.now()-t0-pausedMs-(paused?Date.now()-pauseAt:0)):0;
 function setPausedUi(){$("pauseBox").hidden=!paused; $("vTrain").classList.toggle("paused",paused); $("tPause").hidden=paused;}
-function pause(){if(paused||$("vTrain").hidden) return; paused=true; pauseAt=Date.now(); metroStop(); setPausedUi(); $("tResume").focus();}
-function resume(){if(!paused) return; pausedMs+=Date.now()-pauseAt; paused=false; setPausedUi(); metroApply(); $("tResume").blur();} // правильні натискання: {t: час, ch: символ}
+function pause(){if(paused||counting||$("vTrain").hidden) return; paused=true; pauseAt=Date.now(); metroStop(); setPausedUi(); $("tResume").focus();}
+function resume(){
+  if(!paused||counting) return;
+  $("pauseBox").hidden=true; $("tResume").blur();
+  // короткий відлік, щоб знову поставити руки; час відліку теж рахується як пауза
+  countdown(3,()=>{pausedMs+=Date.now()-pauseAt; paused=false; setPausedUi(); metroApply();});
+}
+
+/* ---------- відлік перед стартом ---------- */
+let counting=false, countTimer=null;
+const HOME_TEXT={ua:"Ф І В А — О Л Д Ж",en:"A S D F — J K L ;"};
+const HOME_KEYS={ua:["ф","і","в","а","о","л","д","ж"],en:["a","s","d","f","j","k","l",";"]};
+function countStop(){clearTimeout(countTimer); counting=false; $("countBox").hidden=true; $("vTrain").classList.remove("counting"); $("tPause").hidden=paused;
+  document.querySelectorAll(".key.homeglow").forEach(k=>k.classList.remove("homeglow"));}
+function countdown(n,done){
+  countStop(); if(n<=0){done&&done(); return;}
+  counting=true; $("tPause").hidden=true; $("countHome").textContent=HOME_TEXT[L.layout]; $("countBox").hidden=false; $("vTrain").classList.add("counting");
+  HOME_KEYS[L.layout].forEach(ch=>{const k=document.querySelector(`.key[data-ch="${CSS.escape(ch)}"]`); if(k)k.classList.add("homeglow");});
+  const step=i=>{
+    $("countNum").textContent=i>0?i:"Старт!"; $("countNum").classList.toggle("go",i===0);
+    $("countNum").classList.remove("pop"); void $("countNum").offsetWidth; $("countNum").classList.add("pop");
+    if(i>0) countTimer=setTimeout(()=>step(i-1),1000);
+    else countTimer=setTimeout(()=>{countStop(); done&&done();},600);
+  };
+  step(n);
+}
+const COUNT=(()=>{const v=Number((window.KLIK_CONFIG||{}).countdown); return isFinite(v)&&v>=0?Math.min(10,Math.round(v)):3;})();
 function startLesson(id){
   L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[]; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
-  $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroApply();
+  $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
+  countdown(COUNT,()=>metroApply());
 }
 
 /* ---------- пристрій без клавіатури (телефон) ---------- */
@@ -378,7 +416,7 @@ function metroApply(){
   $("metroOn").checked=s.metroOn; $("metroBpm").value=s.bpm; $("metroVal").textContent=s.bpm;
   document.querySelector(".metro").classList.toggle("off",!s.metroOn);
   metroStop();
-  if(s.metroOn&&!$("vTrain").hidden&&!paused){metroBeat(); metroTimer=setInterval(metroBeat,60000/s.bpm);}
+  if(s.metroOn&&!$("vTrain").hidden&&!paused&&!counting){metroBeat(); metroTimer=setInterval(metroBeat,60000/s.bpm);}
 }
 $("metroOn").addEventListener("change",e=>{state.settings.metroOn=e.target.checked; save(); metroApply(); e.target.blur();});
 $("metroBpm").addEventListener("input",e=>{state.settings.bpm=Number(e.target.value); $("metroVal").textContent=e.target.value; save(); metroApply();});
@@ -437,6 +475,7 @@ function updStats(){
 const isCyr=c=>/[а-яіїєґё]/i.test(c), isLat=c=>/[a-z]/i.test(c);
 document.addEventListener("keydown",e=>{
   if($("vTrain").hidden||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(counting){if(e.key.length===1||e.key==="Escape") e.preventDefault(); return;}
   if(e.key==="Escape"){e.preventDefault(); paused?resume():pause(); return;}
   if(paused){if(e.key==="Enter"){e.preventDefault(); resume();} else if(e.key.length===1) e.preventDefault(); return;}
   if(e.key.length!==1) return;
@@ -459,7 +498,7 @@ document.addEventListener("keydown",e=>{
   else{errs++; const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
-$("tBack").onclick=()=>{clearInterval(timer); metroStop(); paused=false; setPausedUi(); renderList(); show("vList");};
+$("tBack").onclick=()=>{clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
 $("tPause").onclick=()=>{pause(); };
 $("tResume").onclick=()=>resume();
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause();});
