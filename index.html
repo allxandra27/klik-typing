@@ -264,12 +264,13 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vLogin" hidden>
     <div class="card login">
       <div class="say" style="margin:0"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
-        <div class="bubble">Привіт! Я <b>Клік</b>. Напиши своє ім'я та номер групи, щоб учитель бачив твої успіхи.</div></div>
-      <label for="inName">Прізвище та ім'я</label>
-      <input id="inName" autocomplete="off" maxlength="40" placeholder="Наприклад: Коваленко Марія">
+        <div class="bubble">Привіт! Я <b>Клік</b>. Напиши номер групи та свій особистий код — і я знайду твій прогрес.</div></div>
       <label for="inClass">Номер групи</label>
       <input id="inClass" autocomplete="off" maxlength="20" placeholder="Наприклад: 2026-61">
-      <button class="btn primary" id="btnLogin">Почати</button>
+      <label for="inCode">Особистий код</label>
+      <input id="inCode" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20" placeholder="Наприклад: сова27">
+      <div class="pnote">Код дає вчитель. Друкуй його українською розкладкою.</div>
+      <button class="btn primary" id="btnLogin">Увійти</button>
       <div class="hintline" id="loginErr" style="color:var(--bad)"></div>
     </div>
   </section>
@@ -409,9 +410,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610211630"></script>
-<script src="progress.js?v=202610211630" defer></script>
-<script src="lessons.js?v=202610211630"></script>
+<script src="config.js?v=202610221322"></script>
+<script src="progress.js?v=202610221322" defer></script>
+<script src="lessons.js?v=202610221322"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -442,14 +443,59 @@ const $=id=>document.getElementById(id);
 const views=["vLogin","vList","vTrain","vResult","vProgress"];
 function show(v){views.forEach(x=>$(x).hidden=x!==v); $("who").hidden=!state.student; if(state.student) $("whoName").textContent=`${state.student.name}, ${state.student.cls}`; window.scrollTo(0,0);}
 
-/* вхід */
-$("btnLogin").onclick=()=>{
-  const name=$("inName").value.trim().replace(/\s+/g," "), cls=$("inClass").value.trim();
-  if(name.length<2||!cls){$("loginErr").textContent="Заповни, будь ласка, обидва поля.";return;}
-  state.student={name,cls}; save(); renderList(); show("vList");
+/* ---------- вхід за кодом: прогрес зберігається в Google Таблиці ---------- */
+const SHEET=()=>(window.KLIK_CONFIG||{}).sheetUrl;
+const normTxt=v=>String(v||"").trim().toLowerCase().replace(/\s+/g," ");
+async function fetchStudent(group,code){
+  const r=await fetch(`${SHEET()}?action=login&group=${encodeURIComponent(group)}&code=${encodeURIComponent(code)}`);
+  return r.json();
+}
+// Відновити прогрес з даних таблиці (історія спроб + службовий стан)
+function applyServer(d,code){
+  // Прогрес, що лишився в цьому браузері від того самого учня, переносимо в таблицю (один раз, при першому вході з кодом)
+  const same=state.student&&normTxt(state.student.name)===normTxt(d.name)&&normTxt(state.student.cls)===normTxt(d.group);
+  const local=same?{lessons:state.lessons||{},keys:state.keys||{},history:state.history||[]}:null;
+  const blob=d.state||{};
+  const hist=(d.history||[]).slice().sort((a,b)=>a.ts-b.ts);
+  const les={};
+  const add=(id,st,acc,cpm,n)=>{const p=les[id]||{stars:0,acc:0,cpm:0,times:0}; les[id]={stars:Math.max(p.stars,st||0),acc:Math.max(p.acc,acc||0),cpm:Math.max(p.cpm,cpm||0),times:p.times+(n||0)};};
+  hist.forEach(a=>add(a.id,a.stars,a.acc,a.cpm,1));
+  Object.entries(blob.lessons||{}).forEach(([id,x])=>add(id,x.stars,x.acc,x.cpm,0));
+  let upload=false;
+  if(local){
+    Object.entries(local.lessons).forEach(([id,x])=>{ if((x.stars||0)>(les[id]?.stars||0)) upload=true; add(id,x.stars,x.acc,x.cpm,0); });
+    if(!hist.length&&local.history.length){ hist.push(...local.history); }
+  }
+  state.student={name:d.name,cls:d.group,code};
+  state.history=hist;
+  state.lessons=les;
+  state.keys=(blob.keys&&Object.keys(blob.keys).length)?blob.keys:(local?local.keys:{});
+  if(!blob.keys&&local&&Object.keys(local.keys).length) upload=true;
+  if(blob.settings) state.settings=Object.assign(state.settings||{},blob.settings);
+  save();
+  if(upload) pushState();
+}
+const stateBlob=()=>({lessons:state.lessons,keys:state.keys,settings:state.settings});
+function pushState(){
+  if(!SHEET()||!state.student?.code) return;
+  fetch(SHEET(),{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({kind:"state",cls:state.student.cls,code:state.student.code,state:stateBlob()})}).catch(()=>{});
+}
+$("btnLogin").onclick=async()=>{
+  const cls=$("inClass").value.trim(), code=$("inCode").value.trim().toLowerCase();
+  const err=$("loginErr"); err.style.color="var(--bad)";
+  if(!cls||!code){err.textContent="Заповни, будь ласка, обидва поля."; return;}
+  if(/[a-z]/i.test(code)&&!/[а-яіїєґ]/i.test(code)){err.textContent="Схоже, увімкнена англійська розкладка. Перемкни на УКР і надрукуй код ще раз."; return;}
+  const b=$("btnLogin"); b.disabled=true; err.style.color="var(--muted)"; err.textContent="Шукаю твій прогрес…";
+  try{
+    const d=await fetchStudent(cls,code);
+    if(!d.ok){err.style.color="var(--bad)"; err.textContent="Не знайшли учня з таким кодом у цій групі. Перевір номер групи й код або запитай учителя."; return;}
+    applyServer(d,code); err.textContent=""; renderList(); show("vList");
+  }catch(e){err.style.color="var(--bad)"; err.textContent="Немає зв'язку з таблицею. Перевір інтернет і спробуй ще раз.";}
+  finally{b.disabled=false;}
 };
-[$("inName"),$("inClass")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inName").value=""; $("inClass").value=""; show("vLogin"); $("inName").focus();};
+[$("inClass"),$("inCode")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
+$("logout").onclick=()=>{state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -696,7 +742,7 @@ function finish(){
   window.recordAttempt&&recordAttempt({id:L.id,ts:Date.now(),acc,cpm,errs,sec,stars,rhythm:R?R.rhythm:null,beat:beatTotal?Math.round(100*beatHits/beatTotal):null},R);
   show("vResult");
   sendResult({lesson:L.id,title:L.title,stars,accuracy:acc,cpm,errors:errs,seconds:sec,
-    rhythm:R?R.rhythm:"",metronome:bpm||"",tempo:R&&bpm?R.tempo:""});
+    rhythm:R?R.rhythm:"",metronome:bpm||"",tempo:R&&bpm?R.tempo:"",beat:beatTotal?Math.round(100*beatHits/beatTotal):""});
 }
 $("rAgain").onclick=()=>startLesson(L.id);
 $("rNext").onclick=()=>{const nx=nextOf(L); if(nx&&isOpen(nx)) startLesson(nx.id);};
@@ -708,14 +754,21 @@ function sendResult(r){
   if(!url){$("rSync").textContent="Результат збережено на цьому комп'ютері."; return;}
   $("rSync").textContent="Надсилаю результат учителю…";
   fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify(Object.assign({name:state.student.name,cls:state.student.cls},r))})
-   .then(()=>$("rSync").textContent="Результат надіслано вчителю ✓")
+    body:JSON.stringify(Object.assign({name:state.student.name,cls:state.student.cls,code:state.student.code||"",state:stateBlob()},r))})
+   .then(()=>$("rSync").textContent="Результат збережено в таблиці ✓")
    .catch(()=>$("rSync").textContent="Не вдалося надіслати (немає інтернету?). Результат збережено на цьому комп'ютері.");
 }
 
 /* старт */
 $("year").textContent=new Date().getFullYear();
-if(state.student){renderList(); show("vList");} else {show("vLogin"); $("inName").focus();}
+if(state.student?.code){
+  renderList(); show("vList");
+  // тихо оновити прогрес із таблиці (раптом учень займався на іншому комп'ютері)
+  if(SHEET()) fetchStudent(state.student.cls,state.student.code).then(d=>{ if(d.ok){applyServer(d,state.student.code); if(!$("vList").hidden) renderList();} }).catch(()=>{});
+} else {
+  if(state.student?.cls) $("inClass").value=state.student.cls; // старий вхід без коду — просимо увійти з кодом
+  show("vLogin"); ($("inClass").value?$("inCode"):$("inClass")).focus();
+}
 </script>
 </body>
 </html>
