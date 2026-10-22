@@ -520,7 +520,7 @@ function renderList(){
 $("lessonGroups").addEventListener("click",e=>{const b=e.target.closest(".lesson"); if(b&&!b.disabled) startLesson(b.dataset.id);});
 
 /* ---------- тренування ---------- */
-let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false;
+let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false, lineEnd=false; // lineEnd: рядок щойно завершено
 let hits=[]; // правильні натискання: {t: час, ch: символ}
 let lineBeat=[]; // для поточного рядка: true — у такт, false — не в такт
 let paused=false, pausedMs=0, pauseAt=0; // час на паузі не рахується
@@ -554,7 +554,7 @@ function countdown(n,done){
 }
 const COUNT=(()=>{const v=Number((window.KLIK_CONFIG||{}).countdown); return isFinite(v)&&v>=0?Math.min(10,Math.round(v)):3;})();
 function startLesson(id){
-  L=LESSONS.find(l=>l.id===id); li=0; pos=0; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
+  L=LESSONS.find(l=>l.id===id); li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
   countdown(COUNT,()=>metroApply()); metroApply(); // одразу показати налаштування метронома (відступ для Кліка), щоб після «Старт!» нічого не зсунулося
@@ -679,6 +679,9 @@ document.addEventListener("keydown",e=>{
   if(e.key.length!==1) return;
   e.preventDefault();
   const want=L.lines[li][pos], got=e.key.toLowerCase();
+  // пробіл одразу після кінця рядка за звичкою — не помилка, просто пропускаємо
+  if(lineEnd&&e.key===" "&&want!==" "){lineEnd=false; return;}
+  lineEnd=false;
   // неправильна мова
   if((isCyr(want)&&isLat(got))||(isLat(want)&&isCyr(got))||/[ыэъё]/.test(got)){
     $("warn").textContent=L.layout==="ua"?"Увімкнена не та мова! Перемкни на УКР: Alt + Shift або Win + Пробіл":"Увімкнена не та мова! Перемкни на ENG: Alt + Shift або Win + Пробіл";
@@ -697,7 +700,7 @@ document.addEventListener("keydown",e=>{
     if(metroOnNow()){
       const ok=onBeat(now); if(ok!==null){beatTotal++; if(ok) beatHits++;} lineBeat[pos]=ok;
     }
-    pos++; if(pos>=L.lines[li].length){li++; pos=0; lineBeat=[]; if(li>=L.lines.length){finish();return;}}}
+    pos++; if(pos>=L.lines[li].length){li++; pos=0; lineBeat=[]; lineEnd=true; if(li>=L.lines.length){finish();return;}}}
   else{errs++; window.recordKey&&recordKey(L.layout,want,false); const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
