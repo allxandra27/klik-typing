@@ -86,13 +86,23 @@ function norm(v) {
   return String(v == null ? '' : v).trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+// Група: лише числа без провідних нулів — «2026-61», «2026-6-1» і «2026 61» вважаються однією групою, «2026-01» = «2026-1».
+function groupKey(v) {
+  if (v instanceof Date) v = Utilities.formatDate(v, 'GMT', 'yyyy-M-d');
+  return String(v == null ? '' : v).split(/\D+/).filter(Boolean).map(x => String(Number(x))).join('');
+}
+// Ім'я: слова без цифр і розділових знаків, у будь-якому порядку — «Андрій Боднарчук6 99» = «Боднарчук Андрій».
+function nameKey(v) {
+  return norm(v).replace(/[^a-zа-яіїєґ' ]/g, ' ').split(' ').filter(w => w.length > 1).sort().join(' ');
+}
+
 function findStudent(group, code) {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(STUDENTS);
   if (!sh || sh.getLastRow() < 2) return null;
-  const g = norm(group), c = norm(code);
+  const g = groupKey(group), c = norm(code);
   if (!g || !c) return null;
   const v = sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues();
-  const r = v.find(r => norm(r[0]) === g && norm(r[2]) === c);
+  const r = v.find(r => groupKey(r[0]) === g && norm(r[2]) === c);
   return r ? { group: String(r[0]).trim(), name: String(r[1]).trim(), code: String(r[2]).trim() } : null;
 }
 
@@ -111,11 +121,11 @@ function historyOf(s) {
   if (!sh || sh.getLastRow() < 2) return [];
   const width = Math.min(HEADER.length, sh.getLastColumn());
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, width).getValues();
-  const g = norm(s.group), nm = norm(s.name), c = norm(s.code);
+  const g = groupKey(s.group), nm = nameKey(s.name), c = norm(s.code);
   const val = v => (v === '' || v == null) ? null : Number(v);
   return rows.filter(r => {
     const rc = norm(r[14]);
-    return rc ? rc === c : (norm(r[1]) === g && norm(r[2]) === nm); // старі рядки без коду — за групою та ім'ям
+    return rc ? rc === c : (groupKey(r[1]) === g && nameKey(r[2]) === nm); // старі рядки без коду — за групою та ім'ям
   }).map(r => ({
     id: String(r[3]), ts: r[0] instanceof Date ? r[0].getTime() : Date.parse(r[0]) || 0,
     stars: val(r[5]) || 1, acc: val(r[6]) || 0, cpm: val(r[7]) || 0, errs: val(r[8]) || 0, sec: val(r[9]) || 0,
