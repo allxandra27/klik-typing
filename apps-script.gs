@@ -82,21 +82,28 @@ function generateCodes() {
       return [r[2]];
     });
     sh.getRange(2, 3, n - 1, 1).setNumberFormat('@').setValues(codes);
+    sh.getRange(2, 1, n - 1, 1).setNumberFormat('@').setValues(v.map(r => [groupText(r[0])])); // групи — текстом, не датою
   }
   try { SpreadsheetApp.getUi().alert(made ? `Створено нових кодів: ${made}` : 'Нових учнів без коду не знайдено.'); } catch (e) {}
   return made;
 }
 
 /* ---------- пошук учня ---------- */
+// Якщо таблиця сама перетворила «2026-1» на дату (1 січня 2026), повертаємо назад текст групи.
+function dateText(v) {
+  const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  return Utilities.formatDate(v, tz, v.getDate() === 1 ? 'yyyy-M' : 'yyyy-M-d');
+}
+function groupText(v) { return v instanceof Date ? dateText(v) : String(v == null ? '' : v).trim(); }
+
 function norm(v) {
-  if (v instanceof Date) v = Utilities.formatDate(v, 'GMT', 'yyyy-M-d');
+  if (v instanceof Date) v = dateText(v);
   return String(v == null ? '' : v).trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 // Група: лише числа без провідних нулів — «2026-61», «2026-6-1» і «2026 61» вважаються однією групою, «2026-01» = «2026-1».
 function groupKey(v) {
-  if (v instanceof Date) v = Utilities.formatDate(v, 'GMT', 'yyyy-M-d');
-  return String(v == null ? '' : v).split(/\D+/).filter(Boolean).map(x => String(Number(x))).join('');
+  return groupText(v).split(/\D+/).filter(Boolean).map(x => String(Number(x))).join('');
 }
 // Ім'я: слова без цифр і розділових знаків, у будь-якому порядку — «Андрій Боднарчук6 99» = «Боднарчук Андрій».
 function nameKey(v) {
@@ -110,7 +117,7 @@ function findStudent(group, code) {
   if (!g || !c) return null;
   const v = sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues();
   const r = v.find(r => groupKey(r[0]) === g && norm(r[2]) === c);
-  return r ? { group: String(r[0]).trim(), name: String(r[1]).trim(), code: String(r[2]).trim() } : null;
+  return r ? { group: groupText(r[0]), name: String(r[1]).trim(), code: String(r[2]).trim() } : null;
 }
 
 /* ---------- читання прогресу (вхід учня) ---------- */
