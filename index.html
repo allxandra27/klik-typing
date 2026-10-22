@@ -268,8 +268,8 @@ button{font:inherit;color:inherit;cursor:pointer}
       <label for="inClass">Номер групи</label>
       <input id="inClass" autocomplete="off" maxlength="20" placeholder="Наприклад: 2026-61">
       <label for="inCode">Особистий код</label>
-      <input id="inCode" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20" placeholder="Наприклад: сова27">
-      <div class="pnote">Код дає вчитель. Друкуй його українською розкладкою.</div>
+      <input id="inCode" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20" placeholder="Наприклад: rocket27">
+      <div class="pnote">Код дає вчитель. Друкуй його англійською розкладкою.</div>
       <button class="btn primary" id="btnLogin">Увійти</button>
       <div class="hintline" id="loginErr" style="color:var(--bad)"></div>
     </div>
@@ -410,9 +410,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610221322"></script>
-<script src="progress.js?v=202610221322" defer></script>
-<script src="lessons.js?v=202610221322"></script>
+<script src="config.js?v=202610221356"></script>
+<script src="progress.js?v=202610221356" defer></script>
+<script src="lessons.js?v=202610221356"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -485,7 +485,7 @@ $("btnLogin").onclick=async()=>{
   const cls=$("inClass").value.trim(), code=$("inCode").value.trim().toLowerCase();
   const err=$("loginErr"); err.style.color="var(--bad)";
   if(!cls||!code){err.textContent="Заповни, будь ласка, обидва поля."; return;}
-  if(/[a-z]/i.test(code)&&!/[а-яіїєґ]/i.test(code)){err.textContent="Схоже, увімкнена англійська розкладка. Перемкни на УКР і надрукуй код ще раз."; return;}
+  if(/[а-яіїєґё]/i.test(code)&&!/[a-z]/i.test(code)){err.textContent="Схоже, увімкнена українська розкладка. Перемкни на ENG і надрукуй код ще раз."; return;}
   const b=$("btnLogin"); b.disabled=true; err.style.color="var(--muted)"; err.textContent="Шукаю твій прогрес…";
   try{
     const d=await fetchStudent(cls,code);
