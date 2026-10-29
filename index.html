@@ -89,6 +89,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .kb{--g:6px;--kw:min(56px,calc((min(100vw,1040px) - 32px - 11*var(--g) - 4px)/12));display:grid;gap:var(--g);user-select:none;margin-top:8px;padding-bottom:4px}
 .row{display:flex;gap:var(--g)}
 .row.r1{padding-left:0} .row.r2{padding-left:calc(var(--kw)*.35)} .row.r3{padding-left:calc(var(--kw)*.8)}
+/* з рядом цифр: як на справжній клавіатурі, «1» трохи лівіше за «Й/Q», тож літерні ряди зсуваємо на пів клавіші */
+.kb.num{--kw:min(56px,calc((min(100vw,1040px) - 32px - 11*var(--g) - 4px)/12.5))}
 .key{width:var(--kw);height:calc(var(--kw)*1);min-height:30px;border-radius:clamp(5px,calc(var(--kw)*.16),9px);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:clamp(12px,calc(var(--kw)*.38),20px);text-transform:uppercase;position:relative;flex:none;color:var(--fg)}
 .key.pinky{background:var(--f-pinky)} .key.ring{background:var(--f-ring)} .key.middle{background:var(--f-middle)} .key.index{background:var(--f-index)}
 .key.home::after{content:"";position:absolute;bottom:12%;width:30%;height:3px;border-radius:2px;background:var(--fg);opacity:.6}
@@ -96,6 +98,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .key.new{border-color:var(--ink);border-style:dashed}
 .key.target{border-color:var(--ink);border-style:solid;box-shadow:0 0 0 4px var(--pop);transform:translateY(-2px)}
 .row.r3{padding-left:0}
+.kb.num .row.r1{padding-left:calc(var(--kw)*.5)} .kb.num .row.r2{padding-left:calc(var(--kw)*.85)} .kb.num .row.r3{padding-left:calc(var(--kw)*.5)}
 .key.shift{background:var(--f-pinky);text-transform:none;font-size:clamp(14px,calc(var(--kw)*.5),22px)}
 .key.shift.sl{width:calc(var(--kw)*.75)} .key.shift.sr{width:calc(var(--kw)*.9)}
 .space{width:calc(var(--kw)*6);background:var(--f-thumb);margin-left:calc(var(--kw)*3);text-transform:none;font-size:14px;color:var(--muted)}
@@ -410,9 +413,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610291350"></script>
-<script src="progress.js?v=202610291350" defer></script>
-<script src="lessons.js?v=202610291350"></script>
+<script src="config.js?v=202610291404"></script>
+<script src="progress.js?v=202610291404" defer></script>
+<script src="lessons.js?v=202610291404"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -420,6 +423,8 @@ const LAYOUT={
   ua:[["й","ц","у","к","е","н","г","ш","щ","з","х","ї"],["ф","і","в","а","п","р","о","л","д","ж","є"],["я","ч","с","м","и","т","ь","б","ю","."]],
   en:[["q","w","e","r","t","y","u","i","o","p","[","]"],["a","s","d","f","g","h","j","k","l",";","'"],["z","x","c","v","b","n","m",",",".","/"]]
 };
+// Ряд цифр (показуємо лише в уроках, де є цифри): ті самі пальці, що й у стовпчиках під ним.
+const NUMROW=["1","2","3","4","5","6","7","8","9","0","-"];
 const FCOL=["pinky","ring","middle","index","index","index","index","middle","ring","pinky","pinky","pinky"];
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
@@ -429,6 +434,7 @@ function keyInfo(layout,ch){
   ch=baseKey(layout,ch);
   const rows=LAYOUT[layout];
   for(let r=0;r<rows.length;r++){const c=rows[r].indexOf(ch); if(c>=0) return {r,c,finger:FCOL[c],hand:c<=4?"лівим":"правим"};}
+  const c=NUMROW.indexOf(ch); if(c>=0) return {r:-1,c,finger:FCOL[c],hand:c<=4?"лівим":"правим"};
   return null;
 }
 
@@ -639,10 +645,13 @@ function buildKb(){
   const allowed=new Set([...text].map(c=>baseKey(L.layout,c)));
   const usesShift=[...text].some(c=>needsShift(L.layout,c));
   const neu=new Set(L.newKeys||[]);
+  const num=[...text].some(c=>NUMROW.includes(c));
+  $("kb").classList.toggle("num",num);
+  const key=(ch,c)=>{const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
+    return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`;};
   const sh=(id,cls)=>`<div class="key shift ${cls}${usesShift?"":" dim"}${neu.has(id)?" new":""}" data-ch="${id}" title="Shift">⇧</div>`;
-  $("kb").innerHTML=LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map((ch,c)=>{
-      const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
-      return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`}).join("")}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
+  $("kb").innerHTML=(num?`<div class="row r0">${NUMROW.map(key).join("")}</div>`:"")+
+    LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
     `<div class="row"><div class="key space" data-ch=" ">пробіл</div></div>`;
 }
 function renderLine(){
