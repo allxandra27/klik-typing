@@ -651,5 +651,56 @@ window.LESSONS = [
       "Happy birthday, Anna!",
       "Let's go to the park!"
     ]
+  },
+  {
+    id: "en18", group: "Англійська розкладка: числа", layout: "en",
+    title: "English 18. Цифри: тренування пальців", keys: "1–5 6–0", newKeys: [],
+    intro: "Повторюємо ряд цифр. Кожен палець тягнеться до цифри над своєю клавішею й одразу повертається додому: <b>A S D F</b> — до 1 2 3 4 5, <b>J K L ;</b> — до 6 7 8 9 0.",
+    lines: [
+      "a1a s2s d3d f4f f5f a1a s2s d3d f4f f5f",
+      "j6j j7j k8k l9l ;0; j6j j7j k8k l9l ;0;",
+      "1 2 3 4 5 5 4 3 2 1",
+      "6 7 8 9 0 0 9 8 7 6",
+      "10 20 30 40 50 60 70 80 90 100",
+      "11 12 13 14 15 16 17 18 19 20",
+      "15 26 37 48 59 60 71 82 93 40",
+      "1 cat 2 dogs 3 birds 4 fish 5 frogs",
+      "10 pens 20 books 30 desks 40 chairs",
+      "we have 3 pencils and 2 rulers"
+    ]
+  },
+  {
+    id: "en19", group: "Англійська розкладка: числа", layout: "en", exact: true,
+    title: "English 19. Вік, час і ціни", keys: "числа в реченнях", newKeys: [],
+    intro: "Числа всюди: скільки нам років, котра година, скільки коштує. Великі літери — з Shift, після крапки — пробіл.",
+    lines: [
+      "I am 11 years old.",
+      "My sister is 7 and my brother is 14.",
+      "School starts at 8.30.",
+      "Lunch is at 12.45.",
+      "The lesson is 45 minutes long.",
+      "There are 30 students in my class.",
+      "The book costs 120 hryvnias.",
+      "I live at 25 Green Street.",
+      "My phone number is 095-123-45-67.",
+      "We have 5 lessons on Monday."
+    ]
+  },
+  {
+    id: "en20", group: "Англійська розкладка: числа", layout: "en", exact: true,
+    title: "English 20. Математика й дати", keys: "числа й дати", newKeys: [],
+    intro: "Рахуємо англійською і друкуємо дати. Не поспішай: у довгих числах легко пропустити цифру!",
+    lines: [
+      "2 and 2 is 4. 5 and 5 is 10.",
+      "10 minus 3 is 7.",
+      "3 times 4 is 12.",
+      "100 divided by 4 is 25.",
+      "There are 365 days in a year.",
+      "There are 24 hours in a day.",
+      "Christmas is on 25 December.",
+      "Independence Day of Ukraine is 24 August.",
+      "I was born in 2015.",
+      "How many days are there in 2 weeks? 14!"
+    ]
   }
 ];
