@@ -494,5 +494,124 @@ window.LESSONS = [
       "We have 12 months in a year.",
       "My phone number is 067-555-12-34."
     ]
+  },
+  {
+    id: "en10", group: "Англійська розкладка: слова та речення", layout: "en",
+    title: "English 10. Найчастіші слова", keys: "the and you", newKeys: [],
+    intro: "Ці слова трапляються майже в кожному англійському реченні. Надрукуй їх багато разів — і пальці запам'ятають їх самі!",
+    lines: [
+      "the the the and and and you you you",
+      "is is is it it it in in in on on on",
+      "to to to of of of a a a at at at",
+      "he she we they my your his her",
+      "is are was were have has can will",
+      "this that what who where when",
+      "the cat and the dog",
+      "you are my best friend",
+      "we can play in the park",
+      "they have a big red ball",
+      "she is my sister and he is my brother"
+    ]
+  },
+  {
+    id: "en11", group: "Англійська розкладка: слова та речення", layout: "en",
+    title: "English 11. Рідкісні літери: Q Z X J K", keys: "Q Z X J K", newKeys: [],
+    intro: "Ці літери трапляються рідко, тому пальці їх часто забувають. <b>Q Z</b> — лівий мізинець, <b>X</b> — лівий безіменний, <b>J</b> — правий вказівний (вдома!), <b>K</b> — правий середній.",
+    lines: [
+      "q z x j k q z x j k",
+      "aqa aza sxs jjj kkk",
+      "queen quick quiz quiet question",
+      "zoo zebra zero pizza puzzle",
+      "box fox six taxi mix next",
+      "jam jump juice jacket jungle",
+      "kite king kitten kangaroo milk",
+      "a quick fox jumps over the box",
+      "six zebras at the zoo",
+      "the king likes jam and juice"
+    ]
+  },
+  {
+    id: "en12", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 12. Великі літери: імена та країни", keys: "Shift + літери", newKeys: [],
+    intro: "В англійській з великої літери пишемо імена, країни, міста, дні тижня і слово <b>I</b> (я). Shift — мізинцем <b>іншої</b> руки!",
+    lines: [
+      "Anna Ben Kate Mike Lucy Tom",
+      "Emma Jack Olivia Harry Sophie",
+      "Ukraine Poland England France Spain",
+      "Kyiv London Paris Rome Berlin",
+      "Monday Tuesday Wednesday Thursday",
+      "Friday Saturday Sunday",
+      "I am from Ukraine.",
+      "My name is Anna.",
+      "Tom lives in London.",
+      "On Monday I go to school."
+    ]
+  },
+  {
+    id: "en13", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 13. Апостроф: I'm, don't, it's", keys: "'", newKeys: ["'"],
+    intro: "Апостроф в англійській — праворуч від <b>;</b>, натискаємо <b>правим мізинцем</b> без Shift. Він «склеює» два слова: I am → I'm.",
+    lines: [
+      ";'; ;'; ;'; ''' ''' '''",
+      "I'm I'm you're you're it's it's",
+      "don't don't can't can't isn't isn't",
+      "he's she's we're they're",
+      "I'm ten. It's sunny.",
+      "I don't like rain.",
+      "She can't swim, but she's happy.",
+      "We're friends and they're friends too.",
+      "It's my dog. Its name is Rex.",
+      "Don't worry, it's easy."
+    ]
+  },
+  {
+    id: "en14", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 14. Фрази на уроці", keys: "речення", newKeys: [],
+    intro: "Фрази, які звучать на уроці англійської. Друкуй і читай подумки — так вчиш і клавіатуру, і мову!",
+    lines: [
+      "Good morning, teacher.",
+      "Open your books, please.",
+      "Listen and repeat.",
+      "Look at the board.",
+      "Work in pairs.",
+      "May I come in, please.",
+      "I don't understand.",
+      "Can you help me, please.",
+      "Thank you very much.",
+      "Goodbye, see you tomorrow."
+    ]
+  },
+  {
+    id: "en15", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 15. Скоромовки", keys: "речення", newKeys: [],
+    intro: "Англійські скоромовки — справжнє випробування для пальців. Спершу точно, потім швидше!",
+    lines: [
+      "She sells sea shells by the sea shore.",
+      "Red lorry, yellow lorry.",
+      "A big black bug bit a big black bear.",
+      "Six slippery snails slid slowly.",
+      "Fred fed Ted bread, and Ted fed Fred bread.",
+      "Peter Piper picked a peck of peppers.",
+      "Fresh fried fish, fish fresh fried.",
+      "I scream, you scream, we all scream.",
+      "Good blood, bad blood."
+    ]
+  },
+  {
+    id: "en16", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 16. Підсумковий текст: My School Day", keys: "увесь текст", newKeys: [],
+    intro: "Ти знаєш усі англійські літери, великі літери, кому, крапку й апостроф. Надрукуй розповідь про шкільний день!",
+    lines: [
+      "My name is Max. I'm eleven.",
+      "I get up at seven o'clock.",
+      "I have breakfast with my family.",
+      "Then I go to school by bus.",
+      "My favourite subject is computer science.",
+      "We learn to type fast and well.",
+      "After school I play football with friends.",
+      "In the evening I read a book.",
+      "I go to bed at nine o'clock.",
+      "I love my school day."
+    ]
   }
 ];
