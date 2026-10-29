@@ -413,9 +413,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610291414"></script>
-<script src="progress.js?v=202610291414" defer></script>
-<script src="lessons.js?v=202610291414"></script>
+<script src="config.js?v=202610291424"></script>
+<script src="progress.js?v=202610291424" defer></script>
+<script src="lessons.js?v=202610291424"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -428,8 +428,10 @@ const NUMROW=["1","2","3","4","5","6","7","8","9","0","-"];
 const FCOL=["pinky","ring","middle","index","index","index","index","middle","ring","pinky","pinky","pinky"];
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
-const baseKey=(layout,ch)=>layout==="ua"&&ch===","?".":ch.toLowerCase();
-const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||(layout==="ua"&&ch===",");
+// Знаки, які друкуються з Shift: знак → клавіша під ним (розкладки Windows).
+const SHIFTED={ua:{",":".","!":"1","?":"7"},en:{"!":"1","?":"/"}};
+const baseKey=(layout,ch)=>SHIFTED[layout][ch]||ch.toLowerCase();
+const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||ch in SHIFTED[layout];
 function keyInfo(layout,ch){
   ch=baseKey(layout,ch);
   const rows=LAYOUT[layout];
@@ -645,7 +647,7 @@ function buildKb(){
   const allowed=new Set([...text].map(c=>baseKey(L.layout,c)));
   const usesShift=[...text].some(c=>needsShift(L.layout,c));
   const neu=new Set(L.newKeys||[]);
-  const num=[...text].some(c=>NUMROW.includes(c));
+  const num=[...text].some(c=>NUMROW.includes(baseKey(L.layout,c)));
   $("kb").classList.toggle("num",num);
   const key=(ch,c)=>{const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
     return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`;};
@@ -669,8 +671,10 @@ function renderLine(){
   if(needsShift(L.layout,ch)){
     // Shift натискаємо мізинцем протилежної руки
     const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
-    const name=ch===","?"кому":`«${ch}»`;
-    $("fingerHint").textContent=`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${name} натисни ${info.hand} ${FNAME[info.finger]}`;
+    const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»"}[ch];
+    $("fingerHint").textContent=sign
+      ?`${right?"Правим":"Лівим"} мізинцем затисни Shift і натисни «${base}» ${info.hand} ${FNAME[info.finger]} — вийде ${sign}`
+      :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;
   } else $("fingerHint").textContent=`Натисни «${ch.toUpperCase()}» ${info.hand} ${FNAME[info.finger]}`;
 }
 function updStats(){

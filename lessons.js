@@ -341,6 +341,25 @@ window.LESSONS = [
     ]
   },
   {
+    id: "ua20", group: "Українська розкладка: цифри", layout: "ua", exact: true,
+    title: "Урок 20. Питання та оклики ? !", keys: "? !", newKeys: ["?","!"],
+    intro: "Знак питання — це <b>Shift + 7</b>, знак оклику — <b>Shift + 1</b>. Shift затискаємо мізинцем <b>іншої</b> руки: для «?» — лівим, для «!» — правим.",
+    lines: [
+      "1!1 1!1 7?7 7?7 !!! ???",
+      "Так! Ні! Ура! Привіт! Молодець!",
+      "Хто? Що? Де? Коли? Чому? Як?",
+      "Як тебе звати?",
+      "Скільки тобі років?",
+      "Де ти живеш?",
+      "Котра година?",
+      "Ти любиш читати?",
+      "Яка сьогодні гарна погода!",
+      "Ура, канікули!",
+      "Ти вже зробив домашнє завдання?",
+      "Будь ласка, допоможи мені!"
+    ]
+  },
+  {
     id: "en1", group: "Англійська розкладка", layout: "en",
     title: "English 1. Основна позиція", keys: "ASDF JKL;", newKeys: ["a","s","d","f","j","k","l",";"],
     intro: "Перемкни мову на <b>ENG</b> (Alt + Shift або Win + Пробіл). Ліва рука — <b>A S D F</b>, права — <b>J K L ;</b>. Горбочки на F і J!",
@@ -574,9 +593,9 @@ window.LESSONS = [
       "Listen and repeat.",
       "Look at the board.",
       "Work in pairs.",
-      "May I come in, please.",
+      "May I come in?",
       "I don't understand.",
-      "Can you help me, please.",
+      "Can you help me, please?",
       "Thank you very much.",
       "Goodbye, see you tomorrow."
     ]
@@ -612,6 +631,25 @@ window.LESSONS = [
       "In the evening I read a book.",
       "I go to bed at nine o'clock.",
       "I love my school day."
+    ]
+  },
+  {
+    id: "en17", group: "Англійська розкладка: слова та речення", layout: "en", exact: true,
+    title: "English 17. Питання та оклики ? !", keys: "? !", newKeys: ["?","!"],
+    intro: "Знак питання — це <b>Shift + /</b> (правий мізинець, тож Shift — лівим), знак оклику — <b>Shift + 1</b> (лівий мізинець, тож Shift — правим).",
+    lines: [
+      "/?/ /?/ 1!1 1!1 ??? !!!",
+      "Yes! No! Wow! Hello! Well done!",
+      "Who? What? Where? When? Why? How?",
+      "What is your name?",
+      "How old are you?",
+      "Where do you live?",
+      "What time is it?",
+      "Do you like music?",
+      "Can I have some water, please?",
+      "What a beautiful day!",
+      "Happy birthday, Anna!",
+      "Let's go to the park!"
     ]
   }
 ];
