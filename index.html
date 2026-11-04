@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Клік: тренажер друку</title>
+<script>/* тема — до першого показу сторінки, щоб не блимало */
+try{const t=(JSON.parse(localStorage.getItem("klik-typing-v1")||"{}").settings||{}).theme; if(t) document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Nunito:wght@400;700;800&display=swap">
 <style>
@@ -21,6 +23,10 @@
   --bg:#0F1530; --surface:#18204A; --ink:#AFC6FF; --fg:#E8EDFF; --muted:#9AA6CC; --line:#34437F; --fill:#26326A;
   --pop:#F5B83D; --pop-ink:#2B1C00; --ok:#5CC28B; --bad:#FF7A72; --pink:#8A4A5C;
   --f-pinky:#3B3366; --f-ring:#27406A; --f-middle:#28503A; --f-index:#5A4A22; --f-thumb:#2B3352; --s1:#3987e5; --s2:#d95926; --heat:#d95926; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1530; --surface:#18204A; --ink:#AFC6FF; --fg:#E8EDFF; --muted:#9AA6CC; --line:#34437F; --fill:#26326A;
+  --pop:#F5B83D; --pop-ink:#2B1C00; --ok:#5CC28B; --bad:#FF7A72; --pink:#8A4A5C;
+  --f-pinky:#3B3366; --f-ring:#27406A; --f-middle:#28503A; --f-index:#5A4A22; --f-thumb:#2B3352; --s1:#3987e5; --s2:#d95926; --heat:#d95926; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.5}
@@ -185,6 +191,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 .countnum.go{color:var(--ok);font-size:44px}
 .countnum.pop{animation:pop .35s ease-out}
 @keyframes pop{from{transform:scale(1.6);opacity:.3}to{transform:scale(1);opacity:1}}
+.themebtn{width:40px;height:40px;padding:0;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-size:18px;line-height:1;flex:none}
+.themebtn:hover{border-color:var(--ink)}
+.forecast{min-width:19em}
+.forecast b{color:var(--pop);letter-spacing:.04em}
+.forecast .off{color:var(--line)}
+.forecast b.pop{display:inline-block;animation:pop .35s ease-out}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;max-width:calc(100% - 32px);background:var(--ink);color:var(--surface);border-radius:14px;padding:10px 18px;font-weight:800;text-align:center;pointer-events:none;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+.rain{position:fixed;top:-48px;z-index:60;pointer-events:none;font-size:26px;line-height:1;color:var(--pop);animation:rainfall linear forwards}
+.rain.klik{width:36px;height:36px}
+@keyframes rainfall{to{transform:translateY(calc(100vh + 96px)) rotate(200deg)}}
+.anim-spin{animation:eggSpin .9s ease-in-out}
+@keyframes eggSpin{to{transform:rotate(720deg)}}
 .counttip{flex-basis:100%;border-top:2px solid var(--line);padding-top:10px;font-weight:800;color:var(--ink)}
 .healthtip{margin:12px 0 0;color:var(--muted);font-size:16px}
 .breakbox{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(560px,100%);background:var(--surface);border:3px solid var(--ok);border-radius:18px;padding:22px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
@@ -278,6 +296,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
     <h1>Клік: тренажер друку</h1>
     <div class="who" id="who" hidden><span id="whoName"></span><button class="btn small" id="logout">Змінити учня</button></div>
+    <button class="themebtn" id="themeBtn"></button>
   </header>
 
   <!-- вхід -->
@@ -311,7 +330,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="bar"><h2 id="tTitle"></h2><button class="btn small" id="tPause" title="Пауза (Esc)">⏸ Пауза</button><button class="btn small" id="tBack">← До уроків</button></div>
     <div class="say" style="margin:4px 0 10px"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true" style="width:64px;height:64px"><use href="#klik"/></svg>
       <div class="bubble" id="tBubble"></div></div>
-    <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span></div>
+    <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span><span class="forecast" title="Скільки зірочок буде, якщо далі друкувати без помилок">Прогноз: <b id="sStars"></b> <small id="sRoom"></small></span></div>
     <div class="progress"><i id="pBar"></i></div>
     <div class="metro">
       <label class="metro-on"><input type="checkbox" id="metroOn"> Метроном</label>
@@ -420,6 +439,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   </footer>
 </div>
 
+<div class="toast" id="toast" role="status" hidden></div>
+
 <!-- перерва між уроками — поверх сторінки -->
 <div class="overlay" id="breakBox" role="dialog" aria-labelledby="brkTitle" hidden>
   <div class="breakbox">
@@ -443,10 +464,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611041428"></script>
-<script src="progress.js?v=202611041428" defer></script>
-<script src="words.js?v=202611041428"></script>
-<script src="lessons.js?v=202611041428"></script>
+<script src="config.js?v=202611041711"></script>
+<script src="progress.js?v=202611041711" defer></script>
+<script src="words.js?v=202611041711"></script>
+<script src="lessons.js?v=202611041711"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -511,6 +532,7 @@ function applyServer(d,code){
   state.keys=(blob.keys&&Object.keys(blob.keys).length)?blob.keys:(local?local.keys:{});
   if(!blob.keys&&local&&Object.keys(local.keys).length) upload=true;
   if(blob.settings) state.settings=Object.assign(state.settings||{},blob.settings);
+  applyTheme();
   save();
   if(upload) pushState();
 }
@@ -534,7 +556,7 @@ $("btnLogin").onclick=async()=>{
   finally{b.disabled=false;}
 };
 [$("inClass"),$("inCode")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{typedMs=0; state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
+$("logout").onclick=()=>{typedMs=0; delete state.settings.eggs; state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -675,7 +697,7 @@ function startLesson(id){
   const weak=id.startsWith("weak-");
   const next=weak?weakLesson(id.slice(5)):LESSONS.find(l=>l.id===id);
   if(!next){renderList(); show("vList"); return;} // слабких клавіш більше немає
-  L=next; li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
+  L=next; shownStars=0; clearRain(); li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
   countdown(COUNT,()=>metroApply()); metroApply(); // одразу показати налаштування метронома (відступ для Кліка), щоб після «Старт!» нічого не зсунулося
@@ -790,7 +812,21 @@ function renderLine(){
       :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;
   } else $("fingerHint").textContent=`Натисни «${ch.toUpperCase()}» ${info.hand} ${FNAME[info.finger]}`;
 }
+const starsFor=acc=>acc>=97?3:acc>=90?2:1;
+// Прогноз точний: наприкінці точність = знаки уроку ÷ (знаки + помилки), тож зірочки залежать лише від кількості помилок.
+const finalStars=(chars,e)=>starsFor(Math.floor(100*chars/(chars+e)));
+const plErr=n=>n%10===1&&n%100!==11?"помилка":n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?"помилки":"помилок";
+let shownStars=0;
+function updForecast(){
+  const chars=L.lines.join("").length, st=finalStars(chars,errs);
+  let room=0; if(st>1) while(finalStars(chars,errs+room+1)===st) room++;
+  const b=$("sStars"); b.innerHTML=starsHtml(st);
+  if(shownStars&&st!==shownStars){b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");}
+  shownStars=st;
+  $("sRoom").textContent=st===1?"спокійно, точність важливіша":room?`запас: ${room} ${plErr(room)}`:"запасу немає";
+}
 function updStats(){
+  updForecast();
   $("sErr").textContent=errs;
   $("sAcc").textContent=typed?Math.max(0,Math.floor(100*(typed-errs)/typed)):100;
   const min=elapsed()/60000;
@@ -843,7 +879,7 @@ function finish(){
   const sec=Math.max(1,Math.round(elapsed()/1000));
   const acc=Math.max(0,Math.floor(100*(typed-errs)/typed));
   const cpm=Math.round((typed-errs)/(sec/60));
-  const stars=acc>=97?3:acc>=90?2:1;
+  const stars=starsFor(acc);
   const prev=state.lessons[L.id];
   state.lessons[L.id]={stars:Math.max(stars,prev?.stars||0),acc:Math.max(acc,prev?.acc||0),cpm:Math.max(cpm,prev?.cpm||0),times:(prev?.times||0)+1};
   save();
@@ -872,6 +908,7 @@ function finish(){
   }
   window.recordAttempt&&recordAttempt({id:L.id,ts:Date.now(),acc,cpm,errs,sec,stars,rhythm:R?R.rhythm:null,beat:beatTotal?Math.round(100*beatHits/beatTotal):null},R);
   show("vResult");
+  if(!errs){rain("★"); foundEgg("perfect","Жодної помилки! Клік влаштував зоряний дощ ✨");}
   sendResult({lesson:L.id,title:L.title,stars,accuracy:acc,cpm,errors:errs,seconds:sec,
     rhythm:R?R.rhythm:"",metronome:bpm||"",tempo:R&&bpm?R.tempo:"",beat:beatTotal?Math.round(100*beatHits/beatTotal):""});
 }
@@ -890,10 +927,76 @@ function sendResult(r){
    .catch(()=>$("rSync").textContent="Не вдалося надіслати (немає інтернету?). Результат збережено на цьому комп'ютері.");
 }
 
+/* ---------- темна тема ---------- */
+function isDark(){const t=document.documentElement.dataset.theme; return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;}
+function applyTheme(){
+  const t=state.settings.theme; if(t) document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme;
+  const b=$("themeBtn"); b.textContent=isDark()?"☀️":"🌙"; b.title=b.ariaLabel=isDark()?"Увімкнути світлу тему":"Увімкнути темну тему";
+}
+let themeSync=null, themeClicks=[];
+$("themeBtn").onclick=()=>{
+  state.settings.theme=isDark()?"light":"dark"; applyTheme(); save();
+  clearTimeout(themeSync); themeSync=setTimeout(pushState,2000); // тема їде за учнем і в режимі інкогніто
+  const now=Date.now(); themeClicks=themeClicks.filter(t=>now-t<4000); themeClicks.push(now);
+  if(themeClicks.length>=5){themeClicks=[]; foundEgg("disco","Диско! Клік одягнув темні окуляри 😎");}
+};
+
+/* ---------- пасхалки ---------- */
+const EGG_TOTAL=5;
+let toastTimer=null;
+function toast(text){const t=$("toast"); t.textContent=text; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,4500);}
+function clearRain(){document.querySelectorAll(".rain").forEach(x=>x.remove());}
+function rain(what,count=28){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  clearRain();
+  for(let i=0;i<count;i++){
+    const klik=what==="klik", el=klik?document.createElementNS("http://www.w3.org/2000/svg","svg"):document.createElement("span");
+    if(klik){el.setAttribute("viewBox","0 0 260 260"); el.setAttribute("class","rain klik"); el.innerHTML='<use href="#klik"/>';}
+    else{el.className="rain"; el.textContent=what;}
+    const dur=2.2+Math.random()*2;
+    el.style.left=Math.random()*96+"vw"; el.style.animationDuration=dur+"s"; el.style.animationDelay=Math.random()*1.5+"s";
+    el.addEventListener("animationend",()=>el.remove());
+    document.body.appendChild(el);
+  }
+}
+function foundEgg(id,text){
+  if(!state.student) return;
+  const eggs=state.settings.eggs=state.settings.eggs||[], isNew=!eggs.includes(id);
+  if(isNew){eggs.push(id); save(); pushState();}
+  toast(isNew?`${text} Секрет ${eggs.length} з ${EGG_TOTAL}!`:text);
+}
+const eggKlik=document.querySelector(".top .klik")||document.querySelector("header .klik");
+let tickles=[];
+eggKlik&&eggKlik.addEventListener("click",()=>{
+  const now=Date.now(); tickles=tickles.filter(t=>now-t<4000); tickles.push(now);
+  if(tickles.length<7) return;
+  tickles=[]; eggKlik.classList.remove("anim-spin"); void eggKlik.getBoundingClientRect(); eggKlik.classList.add("anim-spin");
+  foundEgg("tickle","Ой, лоскотно! Клік аж закрутився 😂");
+});
+const KONAMI=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","KeyB","KeyA"];
+let konami=[], typedWord="";
+document.addEventListener("keydown",e=>{
+  // під час уроку й у полях вводу пасхалки не слухають клавіатуру
+  if(!$("vTrain").hidden||!$("breakBox").hidden||e.ctrlKey||e.metaKey||e.altKey||/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
+  konami=[...konami,e.code].slice(-KONAMI.length);
+  if(konami.join()===KONAMI.join()){konami=[]; rain("klik"); foundEgg("konami","Секретний код! Це справжній кліковий дощ 🌧");}
+  if(e.key.length===1){
+    typedWord=(typedWord+e.key.toLowerCase()).slice(-4);
+    if(typedWord==="клік"||typedWord==="klik"){typedWord=""; foundEgg("name","Ти мене кликав? Я тут! 👋");}
+  }
+});
+// Сезонні сюрпризи: сніг на Новий рік, жарт на 1 квітня.
+function seasonEgg(d=new Date()){
+  const m=d.getMonth()+1, day=d.getDate();
+  if((m===12&&day>=20)||(m===1&&day<=10)) rain("❄",20);
+  if(m===4&&day===1&&!$("vList").hidden) $("listBubble").innerHTML="Сьогодні всі клавіші помінялися місцями! Жартую 😄 "+$("listBubble").innerHTML;
+}
+
 /* старт */
+applyTheme();
 $("year").textContent=new Date().getFullYear();
 if(state.student?.code){
-  renderList(); show("vList");
+  renderList(); show("vList"); seasonEgg();
   // тихо оновити прогрес із таблиці (раптом учень займався на іншому комп'ютері)
   if(SHEET()) fetchStudent(state.student.cls,state.student.code).then(d=>{ if(d.ok){applyServer(d,state.student.code); if(!$("vList").hidden) renderList();} }).catch(()=>{});
 } else {
