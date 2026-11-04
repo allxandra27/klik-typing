@@ -70,7 +70,7 @@ function renderGrowth() {
   }
   sel.disabled = false;
   // за замовчуванням — останній урок, який учень проходив щонайменше двічі (інакше — просто останній)
-  const H = state.history, cnt = id => H.filter(a => a.id === id).length;
+  const H = state.history.filter(a => list.some(l => l.id === a.id)), cnt = id => H.filter(a => a.id === id).length;
   const recent = [...H].reverse().find(a => cnt(a.id) >= 2) || H[H.length - 1];
   const keep = list.some(l => l.id === sel.value) ? sel.value : recent.id;
   sel.innerHTML = list.map(l => `<option value="${l.id}">${esc(l.title)}</option>`).join("");

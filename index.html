@@ -443,9 +443,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611041414"></script>
-<script src="progress.js?v=202611041414" defer></script>
-<script src="lessons.js?v=202611041414"></script>
+<script src="config.js?v=202611041428"></script>
+<script src="progress.js?v=202611041428" defer></script>
+<script src="words.js?v=202611041428"></script>
+<script src="lessons.js?v=202611041428"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -540,15 +541,63 @@ const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).joi
 // Урок відкривається, коли попередній урок тієї ж розкладки пройдено щонайменше на unlockStars зірочок.
 const NEED=Number((window.KLIK_CONFIG||{}).unlockStars)||0;
 const prevOf=l=>{const chain=LESSONS.filter(x=>x.layout===l.layout), i=chain.indexOf(l); return i>0?chain[i-1]:null;};
-const nextOf=l=>{const chain=LESSONS.filter(x=>x.layout===l.layout); return chain[chain.indexOf(l)+1]||null;};
+const nextOf=l=>{const chain=LESSONS.filter(x=>x.layout===l.layout), i=chain.indexOf(l); return i<0?null:chain[i+1]||null;};
 const isOpen=l=>{const p=prevOf(l); return !NEED||!p||(state.lessons[p.id]?.stars||0)>=NEED;};
+/* ---------- «Мої слабкі клавіші»: вправа зі слів під конкретного учня ---------- */
+const WEAK_NAME={ua:"українська",en:"англійська"};
+const WEAK_LETTER=/^[a-zа-яіїєґ0-9]$/;
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+function weakPlan(lay){
+  const K=(state.keys||{})[lay]||{}, seen=new Set(Object.keys(K).filter(k=>K[k].n+K[k].e>0));
+  // Слова беремо лише з літер, які учень уже друкував: у пройдених уроках або за статистикою клавіш.
+  LESSONS.filter(l=>l.layout===lay&&state.lessons[l.id]).forEach(l=>[...l.lines.join("")].forEach(c=>seen.add(baseKey(lay,c))));
+  const pool=[...new Set((window.KLIK_WORDS||{})[lay]||[])].filter(w=>[...w].every(c=>seen.has(c)));
+  const digits=[...seen].filter(c=>/[0-9]/.test(c));
+  const wordsFor=k=>/[0-9]/.test(k)
+    ?Array.from({length:12},()=>Array.from({length:3},(_,i)=>i===1?k:pickOne(digits)).join(""))
+    :pool.filter(w=>w.includes(k));
+  const rows=Object.entries(K).filter(([k,r])=>WEAK_LETTER.test(k)&&r.n+r.e>=8&&wordsFor(k).length>=3);
+  // Спершу клавіші з помилками; якщо їх немає, то ті, які учень шукає помітно довше за інші.
+  let mode="err", list=rows.filter(([,r])=>r.e>=2&&r.e/(r.n+r.e)>=.04).sort((a,b)=>b[1].e/(b[1].n+b[1].e)-a[1].e/(a[1].n+a[1].e));
+  if(!list.length){
+    const timed=rows.filter(([,r])=>r.c>=5), mean=timed.reduce((m,[,r])=>m+r.t/r.c,0)/(timed.length||1);
+    mode="slow"; list=timed.filter(([,r])=>r.t/r.c>=mean*1.25).sort((a,b)=>b[1].t/b[1].c-a[1].t/a[1].c);
+  }
+  const keys=list.slice(0,3).map(([k])=>k);
+  return keys.length&&pool.length>=3?{mode,keys,pool,wordsFor,enough:true}:{keys:[],enough:rows.length>=5};
+}
+function weakLesson(lay){
+  const plan=weakPlan(lay); if(!plan.keys.length) return null;
+  const byKey=Object.fromEntries(plan.keys.map(k=>[k,plan.wordsFor(k)])), lines=[];
+  let turn=0, prev="";
+  for(let i=0;i<8;i++){
+    const line=[];
+    for(let tries=0;tries<40;tries++){
+      const w=Math.random()<.75?pickOne(byKey[plan.keys[turn%plan.keys.length]]):pickOne(plan.pool);
+      if(w===prev) continue;
+      if(line.join(" ").length+w.length+1>34){if(line.length) break; continue;}
+      line.push(w); prev=w; turn++;
+    }
+    lines.push(line.join(" "));
+  }
+  const names=plan.keys.map(k=>k.toUpperCase());
+  return {id:`weak-${lay}`,layout:lay,group:"Тренування для тебе",title:`Мої слабкі клавіші: ${WEAK_NAME[lay]} (${names.join(" ")})`,keys:names.join(" "),newKeys:plan.keys,lines,
+    intro:`Клік підібрав слова для клавіш <b>${names.join(", ")}</b>: ${plan.mode==="err"?"на них у тебе найбільше помилок":"їх ти шукаєш найдовше"}. Друкуй спокійно й точно, швидкість прийде сама!`};
+}
+function weakCards(){
+  return `<div class="group">Тренування для тебе</div><div class="lessons">${["ua","en"].map(lay=>{
+    const plan=weakPlan(lay), t=`Мої слабкі клавіші: ${WEAK_NAME[lay]}`;
+    if(!plan.keys.length) return `<button class="lesson locked" disabled><span class="t">${t}</span><span class="meta">${plan.enough?"Слабких клавіш поки немає. Молодець!":"Пройди кілька уроків, і Клік знайде, що потренувати."}</span></button>`;
+    return `<button class="lesson" data-id="weak-${lay}"><span class="t">🎯 ${t}</span><span class="keys">${plan.keys.join(" ").toUpperCase()}</span><span class="meta">${plan.mode==="err"?"Тут найбільше помилок":"Ці клавіші шукаєш найдовше"}. Щоразу нові слова.</span></button>`;
+  }).join("")}</div>`;
+}
 function renderList(){
   const done=LESSONS.filter(l=>(state.lessons[l.id]?.stars||0)>=3).length;
   $("listBubble").innerHTML=done===0?`Обери урок і почни з першого. Пальчики — на основну позицію!`:
     done===LESSONS.length?`Ого, усі уроки на 3 зірочки! <b>Клік тобою пишається!</b> 🏆`:
     `Ти вже пройшов на 3 зірочки <b>${done} з ${LESSONS.length}</b> уроків. Так тримати!`;
   const groups={}; LESSONS.forEach(l=>(groups[l.group]=groups[l.group]||[]).push(l));
-  $("lessonGroups").innerHTML=Object.entries(groups).map(([g,ls])=>`<div class="group">${g}</div><div class="lessons">${
+  $("lessonGroups").innerHTML=weakCards()+Object.entries(groups).map(([g,ls])=>`<div class="group">${g}</div><div class="lessons">${
     ls.map(l=>{const p=state.lessons[l.id];
       if(!isOpen(l)) return `<button class="lesson locked" data-id="${l.id}" disabled><span class="t">🔒 ${l.title}</span><span class="keys">${l.keys}</span>
         <span class="meta">Спершу пройди «${prevOf(l).title}» щонайменше на ${NEED} ${NEED===1?"зірочку":"зірочки"}</span></button>`;
@@ -623,7 +672,10 @@ function startLesson(id){
   if(breakDone) return;
   if(BREAK_MS&&typedMs>=BREAK_MS){startBreak(()=>startLesson(id)); return;}
   $("countTip").textContent=POSTURE_TIPS[postureNo++%POSTURE_TIPS.length];
-  L=LESSONS.find(l=>l.id===id); li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
+  const weak=id.startsWith("weak-");
+  const next=weak?weakLesson(id.slice(5)):LESSONS.find(l=>l.id===id);
+  if(!next){renderList(); show("vList"); return;} // слабких клавіш більше немає
+  L=next; li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
   countdown(COUNT,()=>metroApply()); metroApply(); // одразу показати налаштування метронома (відступ для Кліка), щоб після «Старт!» нічого не зсунулося
