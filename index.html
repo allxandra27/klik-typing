@@ -104,6 +104,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .key.new{border-color:var(--ink);border-style:dashed}
 .key.target{border-color:var(--ink);border-style:solid;box-shadow:0 0 0 4px var(--pop);transform:translateY(-2px)}
 .row.r3{padding-left:0}
+.kb.hasenter{--kw:min(56px,calc((min(100vw,1040px) - 32px - 11*var(--g) - 4px)/13.6))}
+.key.enterkey{width:calc(var(--kw)*1.6);font-size:clamp(10px,calc(var(--kw)*.26),14px);text-transform:none;white-space:nowrap}
 .kb.num .row.r1{padding-left:calc(var(--kw)*.5)} .kb.num .row.r2{padding-left:calc(var(--kw)*.85)} .kb.num .row.r3{padding-left:calc(var(--kw)*.5)}
 .key.shift{background:var(--f-pinky);text-transform:none;font-size:clamp(14px,calc(var(--kw)*.5),22px)}
 .key.shift.sl{width:calc(var(--kw)*.75)} .key.shift.sr{width:calc(var(--kw)*.9)}
@@ -464,10 +466,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611041711"></script>
-<script src="progress.js?v=202611041711" defer></script>
-<script src="words.js?v=202611041711"></script>
-<script src="lessons.js?v=202611041711"></script>
+<script src="config.js?v=202611041729"></script>
+<script src="progress.js?v=202611041729" defer></script>
+<script src="words.js?v=202611041729"></script>
+<script src="lessons.js?v=202611041729"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -481,13 +483,14 @@ const FCOL=["pinky","ring","middle","index","index","index","index","middle","ri
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
 // Знаки, які друкуються з Shift: знак → клавіша під ним (розкладки Windows).
-const SHIFTED={ua:{",":".","!":"1","?":"7"},en:{"!":"1","?":"/"}};
+const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";"}};
 const baseKey=(layout,ch)=>SHIFTED[layout][ch]||ch.toLowerCase();
 const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||ch in SHIFTED[layout];
 function keyInfo(layout,ch){
   ch=baseKey(layout,ch);
   const rows=LAYOUT[layout];
   for(let r=0;r<rows.length;r++){const c=rows[r].indexOf(ch); if(c>=0) return {r,c,finger:FCOL[c],hand:c<=4?"лівим":"правим"};}
+  if(ch==="↵") return {r:1,c:11,finger:"pinky",hand:"правим"}; // Enter
   const c=NUMROW.indexOf(ch); if(c>=0) return {r:-1,c,finger:FCOL[c],hand:c<=4?"лівим":"правим"};
   return null;
 }
@@ -783,12 +786,13 @@ function buildKb(){
   const usesShift=[...text].some(c=>needsShift(L.layout,c));
   const neu=new Set(L.newKeys||[]);
   const num=[...text].some(c=>NUMROW.includes(baseKey(L.layout,c)));
-  $("kb").classList.toggle("num",num);
+  const enter=text.includes("↵"), enterKey=`<div class="key pinky enterkey${neu.has("↵")?" new":""}" data-ch="↵">Enter ↵</div>`;
+  $("kb").classList.toggle("num",num); $("kb").classList.toggle("hasenter",enter);
   const key=(ch,c)=>{const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
     return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`;};
   const sh=(id,cls)=>`<div class="key shift ${cls}${usesShift?"":" dim"}${neu.has(id)?" new":""}" data-ch="${id}" title="Shift">⇧</div>`;
   $("kb").innerHTML=(num?`<div class="row r0">${NUMROW.map(key).join("")}</div>`:"")+
-    LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
+    LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===1&&enter?enterKey:""}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
     `<div class="row"><div class="key space" data-ch=" ">пробіл</div></div>`;
 }
 function renderLine(){
@@ -802,11 +806,12 @@ function renderLine(){
   document.querySelectorAll(".key.target").forEach(k=>k.classList.remove("target"));
   const k=document.querySelector(`.key[data-ch="${CSS.escape(baseKey(L.layout,ch))}"]`); if(k)k.classList.add("target");
   if(ch===" ") {$("fingerHint").textContent="Пробіл — великим пальцем"; return;}
+  if(ch==="↵") {$("fingerHint").textContent="Натисни Enter правим мізинцем"; return;}
   const info=keyInfo(L.layout,ch); if(!info){$("fingerHint").textContent=""; return;}
   if(needsShift(L.layout,ch)){
     // Shift натискаємо мізинцем протилежної руки
     const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
-    const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»"}[ch];
+    const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»",":":"двокрапка «:»","@":"равлик «@»","_":"підкреслення «_»"}[ch];
     $("fingerHint").textContent=sign
       ?`${right?"Правим":"Лівим"} мізинцем затисни Shift і натисни «${base}» ${info.hand} ${FNAME[info.finger]} — вийде ${sign}`
       :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;
@@ -838,9 +843,12 @@ document.addEventListener("keydown",e=>{
   if(counting){if(e.key.length===1||e.key==="Escape") e.preventDefault(); return;}
   if(e.key==="Escape"){e.preventDefault(); paused?resume():pause(); return;}
   if(paused){if(e.key==="Enter"){e.preventDefault(); resume();} else if(e.key.length===1) e.preventDefault(); return;}
-  if(e.key.length!==1) return;
+  const want=L.lines[li][pos], pressed=e.key==="Enter"&&want==="↵"?"↵":e.key;
+  if(pressed.length!==1){if(e.key==="Enter") e.preventDefault(); return;}
   e.preventDefault();
-  const want=L.lines[li][pos], got=e.key.toLowerCase();
+  const got=pressed.toLowerCase();
+  // пробіл перед Enter за звичкою — теж не помилка
+  if(want==="↵"&&e.key===" ") return;
   // пробіл одразу після кінця рядка за звичкою — не помилка, просто пропускаємо
   if(lineEnd&&e.key===" "&&want!==" "){lineEnd=false; return;}
   lineEnd=false;
@@ -857,7 +865,7 @@ document.addEventListener("keydown",e=>{
   $("warn").hidden=true;
   if(!t0){t0=Date.now(); timer=setInterval(updStats,1000);}
   typed++;
-  if((exact?e.key:got)===want){
+  if((exact?pressed:got)===want){
     const now=performance.now(); hits.push({t:now,ch:want}); window.recordKey&&recordKey(L.layout,want,true);
     if(metroOnNow()){
       const ok=onBeat(now); if(ok!==null){beatTotal++; if(ok) beatHits++;} lineBeat[pos]=ok;
