@@ -185,6 +185,23 @@ button{font:inherit;color:inherit;cursor:pointer}
 .countnum.go{color:var(--ok);font-size:44px}
 .countnum.pop{animation:pop .35s ease-out}
 @keyframes pop{from{transform:scale(1.6);opacity:.3}to{transform:scale(1);opacity:1}}
+.counttip{flex-basis:100%;border-top:2px solid var(--line);padding-top:10px;font-weight:800;color:var(--ink)}
+.healthtip{margin:12px 0 0;color:var(--muted);font-size:16px}
+.breakbox{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(560px,100%);background:var(--surface);border:3px solid var(--ok);border-radius:18px;padding:22px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.breakbox h2{font-size:22px}
+.breakbox p{margin:0}
+.breakbox .klik{width:96px;height:96px}
+.breakbox .btn{visibility:hidden}
+.breakbox .btn.on{visibility:visible}
+.breaknum{font-family:var(--display);font-weight:700;font-size:48px;line-height:1.1;color:var(--ok);font-variant-numeric:tabular-nums}
+.anim-far{animation:brkFar 6s ease-in-out infinite}
+.anim-blink{animation:brkBlink 2.4s ease-in-out infinite}
+.anim-shake{animation:brkShake .7s ease-in-out infinite}
+.anim-lift{animation:brkLift 3s ease-in-out infinite}
+@keyframes brkFar{50%{transform:scale(.55)}}
+@keyframes brkBlink{45%,55%{transform:scaleY(.6)}}
+@keyframes brkShake{25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+@keyframes brkLift{50%{transform:translateY(-14px)}}
 .key.homeglow{border-color:var(--ok);border-style:solid;box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 45%,transparent)}
 .nokb{display:flex;gap:12px;align-items:center;background:var(--surface);border:2px solid var(--bad);border-radius:16px;padding:12px 14px;margin:6px 0 12px}
 .nokb .klik{width:56px;height:56px}
@@ -317,6 +334,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="countbox">
         <div class="countnum" id="countNum">5</div>
         <div>Постав пальчики на основну позицію:<br><b id="countHome">Ф І В А — О Л Д Ж</b><br>Великі пальці — на пробілі.</div>
+        <div class="counttip" id="countTip"></div>
       </div>
     </div>
     <div class="overlay" id="pauseBox" hidden>
@@ -390,6 +408,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         <div class="bars" id="rBars"></div>
         <div class="rhythm-slow" id="rSlow"></div>
       </div>
+      <p class="healthtip" id="rTip"></p>
       <div class="actions"><button class="btn" id="rAgain">Ще раз</button><button class="btn primary" id="rNext">Наступний урок</button><button class="btn" id="rList">До уроків</button><button class="btn" id="rProgress">📈 Мій прогрес</button></div>
       <div class="sync" id="rSync"></div>
     </div>
@@ -399,6 +418,17 @@ button{font:inherit;color:inherit;cursor:pointer}
     <a class="brand" href="https://kompschool.com" target="_blank" rel="noopener" title="Школа комп'ютерної майстерності"><img src="logo-shkm.svg" alt="Школа комп'ютерної майстерності"></a>
     <p>© <span id="year">2026</span> <a href="https://kompschool.com" target="_blank" rel="noopener">Школа комп'ютерної майстерності</a>. Усі права захищено. Тренажер, вправи та персонаж Клік є авторськими матеріалами школи.</p>
   </footer>
+</div>
+
+<!-- перерва між уроками — поверх сторінки -->
+<div class="overlay" id="breakBox" role="dialog" aria-labelledby="brkTitle" hidden>
+  <div class="breakbox">
+    <svg class="klik" id="brkKlik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
+    <h2 id="brkTitle"></h2>
+    <p id="brkText"></p>
+    <div class="breaknum" id="brkNum"></div>
+    <button class="btn" id="brkBtn"></button>
+  </div>
 </div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -413,9 +443,9 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202610291429"></script>
-<script src="progress.js?v=202610291429" defer></script>
-<script src="lessons.js?v=202610291429"></script>
+<script src="config.js?v=202611041414"></script>
+<script src="progress.js?v=202611041414" defer></script>
+<script src="lessons.js?v=202611041414"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -503,7 +533,7 @@ $("btnLogin").onclick=async()=>{
   finally{b.disabled=false;}
 };
 [$("inClass"),$("inCode")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
+$("logout").onclick=()=>{typedMs=0; state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -560,8 +590,39 @@ function countdown(n,done){
   };
   step(n);
 }
+/* ---------- здорові звички: поради й перерви ---------- */
+const POSTURE_TIPS=["Спина рівна, стопи стоять на підлозі.","Плечі опущені й розслаблені.","Зап'ястя не лежать на краю столу.","Екран — приблизно на відстані витягнутої руки.","Верх екрана — не вище рівня очей."];
+const REST_TIPS=["Кліпни 10 разів, щоб очі відпочили.","Подивись на щось далеко кілька секунд.","Потруси кистями, щоб вони відпочили.","Розправ плечі й потягнись угору."];
+const BREAKS=[
+  {title:"Очі дивляться вдалину",text:"Подивись у вікно або на найдальшу точку в класі. Просто дивись і нікуди не поспішай.",sec:20,anim:"far"},
+  {title:"Руки відпочивають",text:"Стисни кулаки й розтисни 5 разів. Потім м'яко потруси кистями.",sec:20,anim:"shake"},
+  {title:"Очі кліпають",text:"Повільно покліпай 10 разів. Потім заплющ очі й посидь так, доки не закінчиться час.",sec:20,anim:"blink"},
+  {title:"Плечі й спина",text:"Підніми плечі до вух і повільно опусти 5 разів. Потім потягнись угору.",sec:25,anim:"lift"}
+];
+const BREAK_MS=(()=>{const v=Number((window.KLIK_CONFIG||{}).breakEvery); return isFinite(v)&&v>0?v*60000:0;})();
+let typedMs=0, postureNo=0, restNo=0, breakNo=0, breakTimer=null, breakDone=null; // typedMs: час друку після останньої перерви
+function closeBreak(){clearTimeout(breakTimer); $("breakBox").hidden=true; const done=breakDone; breakDone=null; done&&done();}
+function startBreak(done){
+  const ex=BREAKS[breakNo++%BREAKS.length], end=Date.now()+ex.sec*1000, b=$("brkBtn");
+  typedMs=0; breakDone=done; document.activeElement&&document.activeElement.blur();
+  $("brkTitle").textContent=`Перерва з Кліком: ${ex.title.toLowerCase()}`; $("brkText").textContent=ex.text;
+  $("brkKlik").setAttribute("class",`klik anim-${ex.anim}`);
+  b.textContent="Пропустити"; b.className="btn"; $("breakBox").hidden=false;
+  const tick=()=>{
+    const left=Math.ceil((end-Date.now())/1000);
+    if(left<=0){$("brkNum").textContent="Готово!"; b.textContent="▶ Продовжити"; b.className="btn primary on"; b.focus(); return;}
+    $("brkNum").textContent=left;
+    if(ex.sec-left>=5) b.classList.add("on");
+    breakTimer=setTimeout(tick,250);
+  };
+  tick();
+}
+$("brkBtn").onclick=closeBreak;
 const COUNT=(()=>{const v=Number((window.KLIK_CONFIG||{}).countdown); return isFinite(v)&&v>=0?Math.min(10,Math.round(v)):3;})();
 function startLesson(id){
+  if(breakDone) return;
+  if(BREAK_MS&&typedMs>=BREAK_MS){startBreak(()=>startLesson(id)); return;}
+  $("countTip").textContent=POSTURE_TIPS[postureNo++%POSTURE_TIPS.length];
   L=LESSONS.find(l=>l.id===id); li=0; pos=0; lineEnd=false; errs=0; typed=0; t0=0; lineErr=false; hits=[]; lineBeat=[]; beatHits=0; beatTotal=0; paused=false; pausedMs=0; pauseAt=0; setPausedUi();
   $("tTitle").textContent=L.title; $("tBubble").innerHTML=L.intro; $("sLines").textContent=L.lines.length;
   $("warn").hidden=true; buildKb(); renderLine(); updStats(); show("vTrain"); metroStop();
@@ -717,7 +778,7 @@ document.addEventListener("keydown",e=>{
   else{errs++; window.recordKey&&recordKey(L.layout,want,false); const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
-$("tBack").onclick=()=>{clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
+$("tBack").onclick=()=>{typedMs+=elapsed(); clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
 $("tPause").onclick=()=>{pause(); };
 $("tResume").onclick=()=>resume();
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause();});
@@ -725,6 +786,8 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause(
 /* ---------- результат ---------- */
 function finish(){
   clearInterval(timer); metroStop();
+  typedMs+=elapsed();
+  $("rTip").textContent=`Порада від Кліка: ${REST_TIPS[restNo++%REST_TIPS.length]}`;
   const sec=Math.max(1,Math.round(elapsed()/1000));
   const acc=Math.max(0,Math.floor(100*(typed-errs)/typed));
   const cpm=Math.round((typed-errs)/(sec/60));
