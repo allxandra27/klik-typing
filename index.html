@@ -522,10 +522,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051300"></script>
-<script src="progress.js?v=202611051300" defer></script>
-<script src="words.js?v=202611051300"></script>
-<script src="lessons.js?v=202611051300"></script>
+<script src="config.js?v=202611051307"></script>
+<script src="progress.js?v=202611051307" defer></script>
+<script src="words.js?v=202611051307"></script>
+<script src="lessons.js?v=202611051307"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -539,7 +539,7 @@ const FCOL=["pinky","ring","middle","index","index","index","index","middle","ri
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
 // Знаки, які друкуються з Shift: знак → клавіша під ним (розкладки Windows).
-const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";","<":",",">":".",'"':"'","{":"[","}":"]","#":"3","%":"5","(":"9",")":"0","+":"=","*":"8"}};
+const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";","<":",",">":".",'"':"'","{":"[","}":"]","#":"3","%":"5","(":"9",")":"0","+":"=","*":"8","&":"7"}};
 const baseKey=(layout,ch)=>SHIFTED[layout][ch]||ch.toLowerCase();
 const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||ch in SHIFTED[layout];
 function keyInfo(layout,ch){
@@ -884,7 +884,7 @@ function renderLine(){
     const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
     const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»",":":"двокрапка «:»","@":"равлик «@»","_":"підкреслення «_»",
       "<":"кутова дужка «<»",">":"кутова дужка «>»",'"':'знак лапок «"»',
-      "{":"фігурна дужка «{»","}":"фігурна дужка «}»","#":"решітка «#»","%":"відсоток «%»","(":"дужка «(»",")":"дужка «)»","+":"плюс «+»","*":"зірочка «*»"}[ch];
+      "{":"фігурна дужка «{»","}":"фігурна дужка «}»","#":"решітка «#»","%":"відсоток «%»","(":"дужка «(»",")":"дужка «)»","+":"плюс «+»","*":"зірочка «*»","&":"знак «&»"}[ch];
     $("fingerHint").textContent=sign
       ?`${right?"Правим":"Лівим"} мізинцем затисни Shift і натисни «${base}» ${info.hand} ${FNAME[info.finger]} — вийде ${sign}`
       :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;

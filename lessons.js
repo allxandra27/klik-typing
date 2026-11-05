@@ -1117,5 +1117,127 @@ window.LESSONS = [
       '# call the function↵',
       'print(square(7))↵'
     ]
+  },
+  {
+    id: "js1", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 1. console.log і крапка з комою", keys: '. ( ) " ;', newKeys: [".", "9", "0", "'", ";"],
+    intro: "Команда <b>console.log</b> виводить повідомлення, а <b>alert</b> показує віконце. Після команди ставимо круглі дужки, текст беремо в лапки, а в кінці рядка — <b>крапку з комою</b>.",
+    lines: [
+      'console.log(); console.log();',
+      'console.log("Hi");',
+      'console.log("Hello, world!");',
+      'console.log("My name is Max");',
+      'console.log(2026);',
+      'console.log("JavaScript is fun!");',
+      'console.log("one", "two");',
+      'alert("Hello!");',
+      'alert("Welcome to my site");',
+      'console.log("The end");'
+    ]
+  },
+  {
+    id: "js2", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 2. Змінні: let і const", keys: "let const =", newKeys: ["="],
+    intro: "Змінну створюємо словом <b>let</b>, а сталу, яка не змінюється, — словом <b>const</b>. У назвах із кількох слів друге слово пишемо з великої літери: <b>bestScore</b>.",
+    lines: [
+      'let x = 5;',
+      'let y = 10;',
+      'let name = "Anna";',
+      'let age = 11;',
+      'const city = "Lviv";',
+      'const PI = 3.14;',
+      "let pet = 'cat';",
+      'let isReady = true;',
+      'let bestScore = 100;',
+      'console.log(name, age);',
+      'console.log(bestScore);'
+    ]
+  },
+  {
+    id: "js3", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 3. Математика й склеювання тексту", keys: "+ - * /", newKeys: ["=", "8", "-", "/"],
+    intro: "JavaScript уміє рахувати: <b>+</b> (Shift + клавіша «=»), мінус, <b>*</b> (Shift + 8) і ділення <b>/</b>. Плюсом можна ще й склеювати текст!",
+    lines: [
+      'let a = 2 + 3;',
+      'let b = 10 - 4;',
+      'let c = 6 * 7;',
+      'let d = 20 / 5;',
+      'let total = a + b + c;',
+      'console.log(2 + 2 * 2);',
+      'console.log((2 + 2) * 2);',
+      'score = score + 1;',
+      'score += 10;',
+      'let hello = "Hi, " + name;',
+      'console.log("Sum: " + total);'
+    ]
+  },
+  {
+    id: "js4", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 4. Умови: if, else і фігурні дужки", keys: "{ } && ===", newKeys: ["[", "]", "7", "↵", "⇥"],
+    intro: "Умову пишемо в круглих дужках, а команди — у фігурних: <b>{</b> і <b>}</b> (Shift і клавіші праворуч від P). Усередині дужок робимо відступ клавішею <b>Tab</b>. Знак <b>&&</b> означає «і»: це двічі Shift + 7.",
+    lines: [
+      'if (x > 5) {↵',
+      '    console.log("big");↵',
+      '} else {↵',
+      '    console.log("small");↵',
+      '}↵',
+      'if (age >= 11 && age < 18) {↵',
+      '    console.log("teen");↵',
+      '}↵',
+      'if (name === "Max") {↵',
+      '    console.log("Hi, Max!");↵',
+      '}↵'
+    ]
+  },
+  {
+    id: "js5", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 5. Цикли та масиви", keys: "for [ ] ++", newKeys: ["[", "]"],
+    intro: "Цикл <b>for</b> повторює команди. Масив — це список у квадратних дужках <b>[ ]</b> (дві клавіші праворуч від P, без Shift). Запис <b>i++</b> збільшує число на 1.",
+    lines: [
+      'for (let i = 0; i < 5; i++) {↵',
+      '    console.log(i);↵',
+      '}↵',
+      'let pets = ["cat", "dog", "fish"];↵',
+      'console.log(pets[0]);↵',
+      'console.log(pets.length);↵',
+      'pets.push("bird");↵',
+      'for (let pet of pets) {↵',
+      '    console.log(pet);↵',
+      '}↵'
+    ]
+  },
+  {
+    id: "js6", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 6. Функції", keys: "function return =>", newKeys: [],
+    intro: "Функцію створюємо словом <b>function</b>, результат повертаємо словом <b>return</b>. Коротку функцію можна записати стрілкою <b>=&gt;</b>. Рядок після <b>//</b> — це коментар.",
+    lines: [
+      '// my first function↵',
+      'function hello(name) {↵',
+      '    console.log("Hello, " + name);↵',
+      '}↵',
+      'hello("Anna");↵',
+      'function add(a, b) {↵',
+      '    return a + b;↵',
+      '}↵',
+      'console.log(add(2, 3));↵',
+      'const square = (x) => x * x;↵',
+      'console.log(square(7));↵'
+    ]
+  },
+  {
+    id: "js7", track: "js", group: "JavaScript: друк коду", layout: "en", exact: true,
+    title: "JavaScript 7. Сторінка оживає: кнопка й лічильник", keys: "document click", newKeys: [],
+    intro: "JavaScript керує веб-сторінкою: знаходить елементи, змінює текст і колір, реагує на натискання кнопки. Це найдовші рядки, тож друкуй спокійно!",
+    lines: [
+      'let title = document.querySelector("h1");↵',
+      'let btn = document.querySelector("#btn");↵',
+      'let n = 0;↵',
+      'title.textContent = "Hello!";↵',
+      'title.style.color = "blue";↵',
+      'btn.addEventListener("click", () => {↵',
+      '    n++;↵',
+      '    title.textContent = "Clicks: " + n;↵',
+      '});↵'
+    ]
   }
 ];
