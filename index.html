@@ -89,7 +89,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .hintline{min-height:1.6em;font-weight:800;color:var(--ink);margin-bottom:8px}
 .warn{background:var(--bad);color:#fff;border-radius:12px;padding:8px 14px;font-weight:800;margin:6px 0}
-.next-line{color:var(--muted);font-family:var(--mono);font-size:18px;margin-bottom:10px;overflow-wrap:anywhere}
+.next-line{white-space:pre-wrap;color:var(--muted);font-family:var(--mono);font-size:18px;margin-bottom:10px;overflow-wrap:anywhere}
 
 /* розмір клавіші рахується від ширини екрана: верхній ряд (12 клавіш) завжди вміщується */
 .kb{--g:6px;--rows:12;--sh:0;--kw:min(56px,calc((min(100vw,1040px) - 32px - 11*var(--g) - 4px)/var(--rows)));display:grid;gap:var(--g);user-select:none;margin-top:8px;padding-bottom:4px}
@@ -520,10 +520,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051236"></script>
-<script src="progress.js?v=202611051236" defer></script>
-<script src="words.js?v=202611051236"></script>
-<script src="lessons.js?v=202611051236"></script>
+<script src="config.js?v=202611051243"></script>
+<script src="progress.js?v=202611051243" defer></script>
+<script src="words.js?v=202611051243"></script>
+<script src="lessons.js?v=202611051243"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -537,7 +537,7 @@ const FCOL=["pinky","ring","middle","index","index","index","index","middle","ri
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
 // Знаки, які друкуються з Shift: знак → клавіша під ним (розкладки Windows).
-const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";","<":",",">":".",'"':"'","{":"[","}":"]","#":"3","%":"5","(":"9",")":"0"}};
+const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";","<":",",">":".",'"':"'","{":"[","}":"]","#":"3","%":"5","(":"9",")":"0","+":"=","*":"8"}};
 const baseKey=(layout,ch)=>SHIFTED[layout][ch]||ch.toLowerCase();
 const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||ch in SHIFTED[layout];
 function keyInfo(layout,ch){
@@ -869,7 +869,10 @@ function renderLine(){
   const ch=line[pos];
   document.querySelectorAll(".key.target").forEach(k=>k.classList.remove("target"));
   const k=document.querySelector(`.key[data-ch="${CSS.escape(baseKey(L.layout,ch))}"]`); if(k)k.classList.add("target");
-  if(ch===" ") {$("fingerHint").textContent="Пробіл — великим пальцем"; return;}
+  if(ch===" ") {
+    const left=line.match(/^ */)[0].length-pos; // відступ на початку рядка коду
+    $("fingerHint").textContent=left>0?`Відступ: натисни пробіл ще ${left} ${left===1?"раз":"рази"}`:"Пробіл — великим пальцем"; return;
+  }
   if(ch==="↵") {$("fingerHint").textContent="Натисни Enter правим мізинцем"; return;}
   const info=keyInfo(L.layout,ch); if(!info){$("fingerHint").textContent=""; return;}
   if(needsShift(L.layout,ch)){
@@ -877,7 +880,7 @@ function renderLine(){
     const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
     const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»",":":"двокрапка «:»","@":"равлик «@»","_":"підкреслення «_»",
       "<":"кутова дужка «<»",">":"кутова дужка «>»",'"':'знак лапок «"»',
-      "{":"фігурна дужка «{»","}":"фігурна дужка «}»","#":"решітка «#»","%":"відсоток «%»","(":"дужка «(»",")":"дужка «)»"}[ch];
+      "{":"фігурна дужка «{»","}":"фігурна дужка «}»","#":"решітка «#»","%":"відсоток «%»","(":"дужка «(»",")":"дужка «)»","+":"плюс «+»","*":"зірочка «*»"}[ch];
     $("fingerHint").textContent=sign
       ?`${right?"Правим":"Лівим"} мізинцем затисни Shift і натисни «${base}» ${info.hand} ${FNAME[info.finger]} — вийде ${sign}`
       :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;

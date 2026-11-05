@@ -991,5 +991,131 @@ window.LESSONS = [
       "border-radius: 12px;↵",
       "}↵"
     ]
+  },
+  {
+    id: "py1", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 1. print, дужки й лапки", keys: '( ) "', newKeys: ["9", "0", "'"],
+    intro: "Команда <b>print</b> виводить текст на екран. Після неї йдуть круглі дужки: <b>(</b> — це Shift + 9, <b>)</b> — це Shift + 0. Текст беремо в лапки: <b>Shift + апостроф</b>.",
+    lines: [
+      'print() print() print()',
+      'print("Hi")',
+      'print("Hello, world!")',
+      'print("My name is Max")',
+      'print("I am 11")',
+      'print(2026)',
+      'print("Python is fun!")',
+      'print("one", "two", "three")',
+      'print("Hello", "Kyiv")',
+      'print("The end")'
+    ]
+  },
+  {
+    id: "py2", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 2. Змінні та знак =", keys: "= _ '", newKeys: ["=", "-"],
+    intro: "Змінна зберігає значення: пишемо назву, знак <b>=</b> і значення. У назвах із кількох слів ставимо підкреслення <b>_</b> (Shift + дефіс). Текст можна брати і в одинарні лапки.",
+    lines: [
+      'x = 5',
+      'y = 10',
+      'name = "Anna"',
+      'age = 11',
+      'city = "Lviv"',
+      'my_name = "Max"',
+      'best_score = 100',
+      "pet = 'cat'",
+      'is_ready = True',
+      'print(name, age)',
+      'print(my_name, best_score)'
+    ]
+  },
+  {
+    id: "py3", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 3. Математика: + - * /", keys: "+ - * /", newKeys: ["=", "8", "-", "/"],
+    intro: "Python рахує як калькулятор. <b>+</b> — це Shift + клавіша «=», <b>*</b> (множення) — Shift + 8, мінус і ділення <b>/</b> друкуємо без Shift.",
+    lines: [
+      'a = 2 + 3',
+      'b = 10 - 4',
+      'c = 6 * 7',
+      'd = 20 / 5',
+      'total = a + b + c',
+      'print(2 + 2 * 2)',
+      'print((2 + 2) * 2)',
+      'area = 5 * 8',
+      'half = 100 / 2',
+      'score = score + 1',
+      'print("Sum:", a + b)'
+    ]
+  },
+  {
+    id: "py4", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 4. Запитуємо користувача: input", keys: "input int len", newKeys: [],
+    intro: "Команда <b>input</b> запитує дані в користувача, а <b>int</b> перетворює їх на число. Стеж за дужками: скільки відкрив, стільки й закрий!",
+    lines: [
+      'name = input("Your name: ")',
+      'print("Hello,", name)',
+      'age = int(input("Age: "))',
+      'city = input("City: ")',
+      'x = int(input("x = "))',
+      'y = int(input("y = "))',
+      'print("x + y =", x + y)',
+      'word = input("Word: ")',
+      'print(len(word))',
+      'print(name.upper())'
+    ]
+  },
+  {
+    id: "py5", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 5. Умови: if, else і відступи", keys: ": > < відступ", newKeys: [";", ",", ".", "↵"],
+    intro: "Після умови ставимо <b>двокрапку</b> і натискаємо <b>Enter</b> (знак ↵). Команди всередині умови починаються з <b>відступу: 4 пробіли</b>. Без відступу Python не зрозуміє програму!",
+    lines: [
+      'if x > 5:↵',
+      '    print("big")↵',
+      'else:↵',
+      '    print("small")↵',
+      'if age >= 11:↵',
+      '    print("You can play")↵',
+      'if x > 0:↵',
+      '    print("plus")↵',
+      'elif x < 0:↵',
+      '    print("minus")↵',
+      'else:↵',
+      '    print("zero")↵'
+    ]
+  },
+  {
+    id: "py6", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 6. Цикли та списки", keys: "for while [ ]", newKeys: ["[", "]"],
+    intro: "Цикл повторює команди: <b>for</b> — задану кількість разів, <b>while</b> — поки виконується умова. Список пишемо у квадратних дужках <b>[ ]</b>: це дві клавіші праворуч від P, без Shift.",
+    lines: [
+      'for i in range(5):↵',
+      '    print(i)↵',
+      'pets = ["cat", "dog", "fish"]↵',
+      'for pet in pets:↵',
+      '    print(pet)↵',
+      'numbers = [1, 2, 3, 4, 5]↵',
+      'print(numbers[0])↵',
+      'print(len(numbers))↵',
+      'count = 0↵',
+      'while count < 3:↵',
+      '    count = count + 1↵',
+      'print(count)↵'
+    ]
+  },
+  {
+    id: "py7", track: "py", group: "Python: друк коду", layout: "en", exact: true,
+    title: "Python 7. Функції та коментарі", keys: "def return #", newKeys: ["3"],
+    intro: "Функцію створюємо словом <b>def</b>, а результат повертаємо словом <b>return</b>. Рядок, що починається з решітки <b>#</b> (Shift + 3), — це коментар: підказка для людей, Python його пропускає.",
+    lines: [
+      '# my first function↵',
+      'def hello(name):↵',
+      '    print("Hello,", name)↵',
+      'hello("Anna")↵',
+      'def add(a, b):↵',
+      '    return a + b↵',
+      'print(add(2, 3))↵',
+      'def square(x):↵',
+      '    return x * x↵',
+      '# call the function↵',
+      'print(square(7))↵'
+    ]
   }
 ];
