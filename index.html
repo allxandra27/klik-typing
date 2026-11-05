@@ -229,13 +229,17 @@ button{font:inherit;color:inherit;cursor:pointer}
 .b-look{animation:bLook 5s ease-in-out infinite}
 .b-roll{animation:bRoll 4s linear infinite}
 .b-lid{transform-box:fill-box;transform-origin:center;animation:bBlink 1.8s ease-in-out infinite}
-.b-fingers{transform-box:fill-box;transform-origin:50% 100%;animation:bFist 2.2s ease-in-out infinite}
+.b-skin{fill:var(--f-index);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.b-crease{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;opacity:.45}
+.b-open{animation:bOpen 2.6s ease-in-out infinite}
+.b-fist{transform-box:fill-box;transform-origin:50% 100%;animation:bFist 2.6s ease-in-out infinite}
 .b-shrug{animation:bShrug 2.6s ease-in-out infinite}
 @keyframes bGaze{to{stroke-dashoffset:-16}}
 @keyframes bLook{0%,12%{transform:translateX(-4px)}30%,100%{transform:translateX(5px)}}
 @keyframes bRoll{0%,100%{transform:translate(6px,0)}12.5%{transform:translate(4px,4px)}25%{transform:translate(0,6px)}37.5%{transform:translate(-4px,4px)}50%{transform:translate(-6px,0)}62.5%{transform:translate(-4px,-4px)}75%{transform:translate(0,-6px)}87.5%{transform:translate(4px,-4px)}}
 @keyframes bBlink{0%,50%,100%{transform:scaleY(1)}65%,85%{transform:scaleY(.08)}}
-@keyframes bFist{0%,35%,100%{transform:scaleY(1)}50%,85%{transform:scaleY(.28)}}
+@keyframes bOpen{0%,38%,100%{opacity:1}48%,90%{opacity:0}}
+@keyframes bFist{0%,38%,100%{opacity:0;transform:scale(1.06)}48%,90%{opacity:1;transform:scale(1)}}
 @keyframes bShrug{0%,25%,100%{transform:translateY(0)}50%,70%{transform:translateY(-10px)}}
 .breaknum{font-family:var(--display);font-weight:700;font-size:48px;line-height:1.1;color:var(--ok);font-variant-numeric:tabular-nums}
 .gamebox{display:flex;flex-direction:column;align-items:center;gap:12px;width:min(640px,100%);max-height:100%;overflow:auto;background:var(--surface);border:3px solid var(--pop);border-radius:18px;padding:20px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
@@ -539,10 +543,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051314"></script>
-<script src="progress.js?v=202611051314" defer></script>
-<script src="words.js?v=202611051314"></script>
-<script src="lessons.js?v=202611051314"></script>
+<script src="config.js?v=202611051322"></script>
+<script src="progress.js?v=202611051322" defer></script>
+<script src="words.js?v=202611051322"></script>
+<script src="lessons.js?v=202611051322"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -749,14 +753,23 @@ const REST_TIPS=["Кліпни 10 разів, щоб очі відпочили."
 // Анімовані малюнки до вправ: показують, що саме робити.
 const FACE=(cx,cy,r)=>`<circle class="b-face" cx="${cx}" cy="${cy}" r="${r}"/><path class="b-st" d="M${cx-r*.36} ${cy+r*.45}Q${cx} ${cy+r*.75} ${cx+r*.36} ${cy+r*.45}"/>`;
 const EYES=(cx,cy,d,cls)=>[-1,1].map(k=>`<g class="${cls==="b-lid"?cls:""}"><ellipse class="b-white" cx="${cx+k*d}" cy="${cy}" rx="12" ry="13"/><circle class="b-pupil${cls==="b-lid"?"":" "+cls}" cx="${cx+k*d}" cy="${cy+1}" r="5.5"/></g>`).join("");
-const HAND=(x,thumb)=>`<g class="b-fingers">${[[1,30],[11,37],[21,35],[31,27]].map(([dx,h])=>`<rect class="b-face" x="${x+dx}" y="${64-h}" width="9" height="${h}" rx="4.5"/>`).join("")}</g>`+
-  `<rect class="b-face" x="${thumb>0?x+35:x-5}" y="62" width="10" height="26" rx="5" transform="rotate(${-32*thumb} ${thumb>0?x+40:x} 88)"/><rect class="b-face" x="${x}" y="56" width="41" height="42" rx="11"/>`;
+// Долоня (вид з боку долоні) і кулак: два малюнки, що плавно змінюють один одного.
+const FINGER=(x,w,h,base,rot)=>`<g transform="rotate(${rot} ${x+w/2} ${base})"><rect class="b-skin" x="${x}" y="${base-h}" width="${w}" height="${h+8}" rx="${w/2}"/>`+
+  `<path class="b-crease" d="M${x+2.5} ${base-h*.36}h${w-5}M${x+2.5} ${base-h*.66}h${w-5}"/></g>`;
+const HAND=mirror=>`<g transform="${mirror?"translate(226 4) scale(-1 1)":"translate(14 4)"}">`+
+  `<g class="b-open">${FINGER(22,13,40,70,-9)}${FINGER(37,13,47,66,-3)}${FINGER(52,13,43,66,4)}${FINGER(66,12,32,71,12)}`+
+    `<g transform="rotate(-50 27 102)"><rect class="b-skin" x="20" y="62" width="15" height="44" rx="7.5"/><path class="b-crease" d="M23 80h9"/></g>`+
+    `<path class="b-skin" d="M30 130Q25 104 22 80Q21 62 38 60L66 60Q82 62 81 80Q79 106 73 130Z"/>`+
+    `<path class="b-crease" d="M30 86Q48 72 76 80M29 100Q46 88 66 104M44 124Q40 104 52 90"/></g>`+
+  `<g class="b-fist"><path class="b-skin" d="M30 130Q24 108 23 88Q20 66 33 61Q39 52 47 58Q55 51 62 59Q70 54 75 63Q86 68 82 88Q80 108 73 130Z"/>`+
+    `<path class="b-crease" d="M40 60V80M54 59V81M67 62V80M27 82Q52 92 80 82"/>`+
+    `<g transform="rotate(-14 44 98)"><rect class="b-skin" x="20" y="90" width="48" height="17" rx="8.5"/><path class="b-crease" d="M52 93v11"/></g></g></g>`;
 const BREAK_ART={
   far:`<svg viewBox="0 0 240 140">${FACE(62,72,42)}${EYES(62,62,17,"b-look")}<path class="b-gaze" d="M112 62H158"/><path class="b-arrow" d="M150 54l9 8-9 8"/>`+
     `<rect class="b-sky" x="170" y="22" width="60" height="72" rx="5"/><circle class="b-sun" cx="186" cy="40" r="7"/><path class="b-st" d="M214 92V76"/><circle class="b-tree" cx="214" cy="68" r="11"/><path class="b-st" d="M200 22V94M170 58H230"/></svg>`,
   roll:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}${EYES(120,62,20,"b-roll")}<path class="b-arrow" d="M70 30A64 64 0 0 1 170 30M160 22l11 8-13 4"/></svg>`,
   blink:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}<path class="b-st" d="M89 62q11 7 22 0M129 62q11 7 22 0"/>${EYES(120,62,20,"b-lid")}</svg>`,
-  hands:`<svg viewBox="0 0 240 140">${HAND(56,1)}${HAND(143,-1)}<path class="b-arrow" d="M30 44V24M22 32l8-9 8 9M210 44V24M202 32l8-9 8 9"/></svg>`,
+  hands:`<svg viewBox="0 0 240 140">${HAND(false)}${HAND(true)}</svg>`,
   shrug:`<svg viewBox="0 0 240 140">${FACE(120,36,20)}<circle class="b-pupil" cx="113" cy="33" r="2.5"/><circle class="b-pupil" cx="127" cy="33" r="2.5"/><rect class="b-body" x="94" y="62" width="52" height="66" rx="14"/>`+
     `<g class="b-shrug"><rect class="b-body" x="74" y="64" width="17" height="54" rx="8.5"/><rect class="b-body" x="149" y="64" width="17" height="54" rx="8.5"/><path class="b-arrow" d="M48 96V68M39 78l9-11 9 11M192 96V68M183 78l9-11 9 11"/></g></svg>`
 };
