@@ -224,6 +224,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 #mazeSvg{width:100%;max-height:56vh;display:block}
 #mazeWalls{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round}
 #mazeKlik{transition:transform .1s linear}
+#bridgeSvg{width:100%;display:block}
+.bwater{fill:color-mix(in srgb,var(--s1) 30%,var(--surface))}
+.bwave{fill:none;stroke:var(--s1);stroke-width:1;stroke-linecap:round}
+.bbank{fill:var(--f-middle);stroke:var(--ink);stroke-width:1}
+.bplank{fill:none;stroke:var(--muted);stroke-width:.8;stroke-dasharray:2 1.5}
+.bplank.on{fill:var(--pop);stroke:var(--ink);stroke-dasharray:none}
+.bword{text-align:center;margin:10px 0 0}
 .anim-far{animation:brkFar 6s ease-in-out infinite}
 .anim-blink{animation:brkBlink 2.4s ease-in-out infinite}
 .anim-shake{animation:brkShake .7s ease-in-out infinite}
@@ -478,6 +485,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="gamebar"><span id="gLevel"></span><span id="gTime"></span></div>
       <p id="gHint" style="margin:6px 0 10px">Веди Кліка стрілками до золотого курсора</p>
       <svg id="mazeSvg" role="img" aria-label="Лабіринт"><path id="mazeWalls"/><path class="gold-cursor" id="mazeGoal" d="M0 0V7.4L2 5.6 3.4 8.6 4.8 8 3.4 5H6Z"/><g id="mazeKlik"><svg class="klik" x="1" y="1" width="8" height="8" viewBox="0 0 260 260"><use href="#klik"/></svg></g></svg>
+      <div id="bridgeBox" hidden><svg id="bridgeSvg" viewBox="0 0 200 62" role="img" aria-label="Міст через річку"></svg><div class="strip bword" id="bWord"></div></div>
       <button class="btn" id="gClose" style="margin-top:12px">Завершити гру</button>
     </div>
     <div id="gAfter" hidden>
@@ -502,10 +510,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611050946"></script>
-<script src="progress.js?v=202611050946" defer></script>
-<script src="words.js?v=202611050946"></script>
-<script src="lessons.js?v=202611050946"></script>
+<script src="config.js?v=202611050950"></script>
+<script src="progress.js?v=202611050950" defer></script>
+<script src="words.js?v=202611050950"></script>
+<script src="lessons.js?v=202611050950"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -610,11 +618,14 @@ const isOpen=l=>{const p=prevOf(l); return !NEED||!p||(state.lessons[p.id]?.star
 const WEAK_NAME={ua:"українська",en:"англійська"};
 const WEAK_LETTER=/^[a-zа-яіїєґ0-9]$/;
 const pickOne=a=>a[Math.floor(Math.random()*a.length)];
-function weakPlan(lay){
+// Слова лише з літер, які учень уже друкував: у пройдених уроках або за статистикою клавіш.
+function knownWords(lay){
   const K=(state.keys||{})[lay]||{}, seen=new Set(Object.keys(K).filter(k=>K[k].n+K[k].e>0));
-  // Слова беремо лише з літер, які учень уже друкував: у пройдених уроках або за статистикою клавіш.
   LESSONS.filter(l=>l.layout===lay&&state.lessons[l.id]).forEach(l=>[...l.lines.join("")].forEach(c=>seen.add(baseKey(lay,c))));
-  const pool=[...new Set((window.KLIK_WORDS||{})[lay]||[])].filter(w=>[...w].every(c=>seen.has(c)));
+  return {K,seen,pool:[...new Set((window.KLIK_WORDS||{})[lay]||[])].filter(w=>[...w].every(c=>seen.has(c)))};
+}
+function weakPlan(lay){
+  const {K,seen,pool}=knownWords(lay);
   const digits=[...seen].filter(c=>/[0-9]/.test(c));
   const wordsFor=k=>/[0-9]/.test(k)
     ?Array.from({length:12},()=>Array.from({length:3},(_,i)=>i===1?k:pickOne(digits)).join(""))
@@ -1056,12 +1067,21 @@ function checkGoldenCursor(acc,R){
   c.done.push(L.id); save();
   const n=c.done.length;
   if(n!==1&&n%GOLD.every) return;
+  // Ігри чергуються: перше запрошення — лабіринт, друге — міст, і знову по колу.
+  game=GAMES[GAME_ORDER[(n===1?0:n/GOLD.every)%GAME_ORDER.length]]; gameLay=L.layout;
   clearRain(); document.activeElement&&document.activeElement.blur();
-  $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «Клік у лабіринті».`;
+  $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «${game.name}».`;
   $("gInvite").hidden=false; $("gPlayfield").hidden=true; $("gAfter").hidden=true; $("gameBox").hidden=false;
 }
-const MAZE_LEVELS=[[9,6],[13,8],[17,10]], MAZE_MS=120000;
-let maze=null, gameEnd=0, gameTimer=null, mazeLevel=0;
+const GAME_MS=120000, MAZE_LEVELS=[[9,6],[13,8],[17,10]], BRIDGE_LEVELS=[5,6,7];
+const GAMES={
+  maze:{name:"Клік у лабіринті",unit:"лабіринтів",total:MAZE_LEVELS.length,start:startMaze,allDone:"Усі лабіринти пройдено!",
+    how:"Веди Кліка стрілками до золотого курсора"},
+  bridge:{name:"Міст через річку",unit:"річок",total:BRIDGE_LEVELS.length,start:startBridge,allDone:"Усі мости збудовано!",
+    how:"Друкуй слово: кожне слово кладе дошку. Помилка — дошка падає у воду, і слово починається спочатку."}
+};
+const GAME_ORDER=["maze","bridge"];
+let game=GAMES.maze, gameLay="ua", maze=null, bridge=null, gameEnd=0, gameTimer=null, gameLevel=0;
 function buildMaze(w,h){
   const open=Array.from({length:h},()=>Array.from({length:w},()=>new Set())), seen=new Set(["0,0"]), stack=[[0,0]];
   const DIRS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
@@ -1077,7 +1097,7 @@ function buildMaze(w,h){
   return {w,h,open,x:0,y:0,DIRS};
 }
 function startMaze(){
-  const [w,h]=MAZE_LEVELS[mazeLevel], C=10;
+  const [w,h]=MAZE_LEVELS[gameLevel], C=10;
   maze=buildMaze(w,h);
   let d=`M0 0H${w*C}M0 0V${h*C}`;
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){
@@ -1088,7 +1108,33 @@ function startMaze(){
   $("mazeWalls").setAttribute("d",d);
   $("mazeGoal").setAttribute("transform",`translate(${(w-1)*C+2.5} ${(h-1)*C+1})`);
   $("mazeKlik").style.transform="translate(0px,0px)";
-  $("gLevel").textContent=`Лабіринт ${mazeLevel+1} з ${MAZE_LEVELS.length}`;
+  $("gLevel").textContent=`Лабіринт ${gameLevel+1} з ${MAZE_LEVELS.length}`;
+}
+/* «Міст через річку»: слова з уже вивчених літер тією розкладкою, якою учень щойно друкував */
+function bridgeWords(){
+  let list=knownWords(gameLay).pool.filter(w=>/^[a-zа-яіїєґ]{3,6}$/.test(w));
+  if(list.length<8) list=[...new Set(LESSONS.filter(l=>l.layout===gameLay&&state.lessons[l.id])
+    .flatMap(l=>l.lines.join(" ").toLowerCase().split(/\s+/)).filter(w=>/^[a-zа-яіїєґ]{2,6}$/.test(w)))];
+  return list.length?list:gameLay==="ua"?["лад","дід","вода"]:["dad","sad","all"];
+}
+function startBridge(){
+  bridge={need:BRIDGE_LEVELS[gameLevel],planks:0,words:bridge?bridge.words:bridgeWords(),word:"",pos:0};
+  nextBridgeWord();
+}
+function nextBridgeWord(){
+  let w; do{w=pickOne(bridge.words);}while(w===bridge.word&&bridge.words.length>1);
+  bridge.word=w; bridge.pos=0; drawBridge();
+}
+function drawBridge(){
+  const b=bridge, W=140/b.need, kx=b.planks?30+(b.planks-.5)*W-11:4;
+  let svg=`<rect class="bwater" x="30" y="30" width="140" height="32"/><path class="bwave" d="M38 44q5-4 10 0t10 0M92 53q5-4 10 0t10 0M138 42q5-4 10 0t10 0"/>`+
+    `<rect class="bbank" x="-2" y="27" width="32" height="37" rx="3"/><rect class="bbank" x="170" y="27" width="32" height="37" rx="3"/>`;
+  for(let i=0;i<b.need;i++) svg+=`<rect class="bplank${i<b.planks?" on":""}" x="${30+i*W+.8}" y="26" width="${W-1.6}" height="5" rx="1"/>`;
+  svg+=`<path class="gold-cursor" transform="translate(180 9) scale(1.7)" d="M0 0V7.4L2 5.6 3.4 8.6 4.8 8 3.4 5H6Z"/>`+
+    `<svg class="klik" x="${kx}" y="4" width="22" height="22" viewBox="0 0 260 260"><use href="#klik"/></svg>`;
+  $("bridgeSvg").innerHTML=svg;
+  $("bWord").innerHTML=[...b.word].map((c,i)=>`<span class="${i<b.pos?"done":i===b.pos?"cur":"todo"}">${c}</span>`).join("");
+  $("gLevel").textContent=`Річка ${gameLevel+1} з ${BRIDGE_LEVELS.length} · дошок: ${b.planks} з ${b.need}`;
 }
 const plNew=n=>n%10===1&&n%100!==11?"новий урок":n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?"нові уроки":"нових уроків";
 // Скільки ще нових уроків з потрібним результатом лишилося до наступного запрошення.
@@ -1099,24 +1145,31 @@ function nextInviteText(){
   return `Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${GOLD.accuracy}% і ритмічністю від ${GOLD.rhythm}%. Уроки, за які вже було нараховано, повторно не рахуються.`;
 }
 function endGame(text,title="Гру завершено!"){
-  clearTimeout(gameTimer); gameTimer=null; maze=null;
+  clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null;
   $("gAfterTitle").textContent=title; $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
   $("gInvite").hidden=true; $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
 }
 function gameTick(){
   const left=Math.max(0,Math.ceil((gameEnd-Date.now())/1000));
   $("gTime").textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;
-  if(left<=0){endGame(`Час вийшов! Пройдено лабіринтів: ${mazeLevel} з ${MAZE_LEVELS.length}. Гарна гра!`); return;}
+  if(left<=0){endGame(`Час вийшов! Пройдено ${game.unit}: ${gameLevel} з ${game.total}. Гарна гра!`); return;}
   gameTimer=setTimeout(gameTick,250);
 }
-function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; $("gameBox").hidden=true;}
+function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null; $("gameBox").hidden=true;}
+function levelDone(){
+  gameLevel++;
+  if(gameLevel<game.total) game.start();
+  else endGame(`${game.allDone} Клік дякує тобі за чудову гру 🏆`);
+}
 $("gNo").onclick=()=>endGame("Ти відмовився від гри. Це запрошення вже не повернеться.","Запрошення закрито");
-$("gClose").onclick=()=>endGame(`Ти завершив гру раніше. Пройдено лабіринтів: ${mazeLevel} з ${MAZE_LEVELS.length}.`);
+$("gClose").onclick=()=>endGame(`Ти завершив гру раніше. Пройдено ${game.unit}: ${gameLevel} з ${game.total}.`);
 $("gDone").onclick=closeGame;
 $("gPlay").onclick=()=>{
-  mazeLevel=0; gameEnd=Date.now()+MAZE_MS;
+  gameLevel=0; gameEnd=Date.now()+GAME_MS;
   $("gInvite").hidden=true; $("gPlayfield").hidden=false; $("gPlay").blur();
-  startMaze(); gameTick();
+  $("mazeSvg").toggleAttribute("hidden",game!==GAMES.maze); $("bridgeBox").hidden=game!==GAMES.bridge;
+  $("gHint").textContent=game.how;
+  game.start(); gameTick();
 };
 document.addEventListener("keydown",e=>{
   if(!maze||!maze.DIRS[e.key]) return;
@@ -1124,11 +1177,24 @@ document.addEventListener("keydown",e=>{
   if(!maze.open[maze.y][maze.x].has(e.key)) return;
   const [dx,dy]=maze.DIRS[e.key]; maze.x+=dx; maze.y+=dy;
   $("mazeKlik").style.transform=`translate(${maze.x*10}px,${maze.y*10}px)`;
-  if(maze.x===maze.w-1&&maze.y===maze.h-1){
-    mazeLevel++;
-    if(mazeLevel<MAZE_LEVELS.length) startMaze();
-    else endGame("Усі лабіринти пройдено! Клік дякує тобі за чудову гру 🏆");
+  if(maze.x===maze.w-1&&maze.y===maze.h-1) levelDone();
+});
+document.addEventListener("keydown",e=>{
+  if(!bridge||e.metaKey||(e.key.length!==1&&e.key!=="Enter")) return;
+  e.preventDefault();
+  if(e.key===" "||e.key==="Enter") return; // пробіл за звичкою — не помилка
+  const want=bridge.word[bridge.pos], got=e.key.toLowerCase();
+  if((isCyr(want)&&isLat(got))||(isLat(want)&&isCyr(got))){
+    $("gHint").textContent=`Увімкнена не та мова! Перемкни на ${gameLay==="ua"?"УКР":"ENG"}: Alt + Shift або Win + Пробіл`; return;
   }
+  if(got!==want){
+    bridge.pos=0; drawBridge(); $("gHint").textContent="Ой, дошка впала у воду! Почни це слово спочатку.";
+    const w=$("bWord"); w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake"); return;
+  }
+  $("gHint").textContent=game.how; bridge.pos++;
+  if(bridge.pos<bridge.word.length){drawBridge(); return;}
+  bridge.planks++;
+  if(bridge.planks<bridge.need) nextBridgeWord(); else levelDone();
 });
 
 /* старт */
