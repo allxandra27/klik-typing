@@ -210,9 +210,33 @@ button{font:inherit;color:inherit;cursor:pointer}
 .breakbox{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(560px,100%);background:var(--surface);border:3px solid var(--ok);border-radius:18px;padding:22px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .breakbox h2{font-size:22px}
 .breakbox p{margin:0}
-.breakbox .klik{width:96px;height:96px}
-.breakbox .btn{visibility:hidden}
-.breakbox .btn.on{visibility:visible}
+#breakBox{background:rgba(48,52,66,.9)}
+.wrap[inert]{filter:grayscale(1)}
+.brk-art svg{display:block;width:min(300px,84%);height:auto;margin:0 auto}
+.brkbar{width:100%;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
+.brkbar i{display:block;height:100%;width:0;background:var(--ok)}
+.brknote{font-size:14px;color:var(--muted)}
+.b-st{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.b-face{fill:var(--f-index);stroke:var(--ink);stroke-width:4}
+.b-white{fill:var(--surface);stroke:var(--ink);stroke-width:3}
+.b-pupil{fill:var(--ink)}
+.b-sky{fill:var(--f-ring);stroke:var(--ink);stroke-width:4}
+.b-sun{fill:var(--pop)}
+.b-tree{fill:var(--f-middle);stroke:var(--ink);stroke-width:3}
+.b-body{fill:var(--f-pinky);stroke:var(--ink);stroke-width:4;stroke-linejoin:round}
+.b-arrow{fill:none;stroke:var(--pop);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.b-gaze{fill:none;stroke:var(--pop);stroke-width:4;stroke-linecap:round;stroke-dasharray:8 8;animation:bGaze 1s linear infinite}
+.b-look{animation:bLook 5s ease-in-out infinite}
+.b-roll{animation:bRoll 4s linear infinite}
+.b-lid{transform-box:fill-box;transform-origin:center;animation:bBlink 1.8s ease-in-out infinite}
+.b-fingers{transform-box:fill-box;transform-origin:50% 100%;animation:bFist 2.2s ease-in-out infinite}
+.b-shrug{animation:bShrug 2.6s ease-in-out infinite}
+@keyframes bGaze{to{stroke-dashoffset:-16}}
+@keyframes bLook{0%,12%{transform:translateX(-4px)}30%,100%{transform:translateX(5px)}}
+@keyframes bRoll{0%,100%{transform:translate(6px,0)}12.5%{transform:translate(4px,4px)}25%{transform:translate(0,6px)}37.5%{transform:translate(-4px,4px)}50%{transform:translate(-6px,0)}62.5%{transform:translate(-4px,-4px)}75%{transform:translate(0,-6px)}87.5%{transform:translate(4px,-4px)}}
+@keyframes bBlink{0%,50%,100%{transform:scaleY(1)}65%,85%{transform:scaleY(.08)}}
+@keyframes bFist{0%,35%,100%{transform:scaleY(1)}50%,85%{transform:scaleY(.28)}}
+@keyframes bShrug{0%,25%,100%{transform:translateY(0)}50%,70%{transform:translateY(-10px)}}
 .breaknum{font-family:var(--display);font-weight:700;font-size:48px;line-height:1.1;color:var(--ok);font-variant-numeric:tabular-nums}
 .gamebox{display:flex;flex-direction:column;align-items:center;gap:12px;width:min(640px,100%);max-height:100%;overflow:auto;background:var(--surface);border:3px solid var(--pop);border-radius:18px;padding:20px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .gamebox h2{font-size:22px}
@@ -242,14 +266,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 #kbGame .key.slot:hover{border-color:var(--ink);border-style:solid}
 #kbGame .key:not(.slot){cursor:default}
 #kbGame .key.shake{animation:shake .25s;border-color:var(--bad)}
-.anim-far{animation:brkFar 6s ease-in-out infinite}
-.anim-blink{animation:brkBlink 2.4s ease-in-out infinite}
-.anim-shake{animation:brkShake .7s ease-in-out infinite}
-.anim-lift{animation:brkLift 3s ease-in-out infinite}
-@keyframes brkFar{50%{transform:scale(.55)}}
-@keyframes brkBlink{45%,55%{transform:scaleY(.6)}}
-@keyframes brkShake{25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
-@keyframes brkLift{50%{transform:translateY(-14px)}}
 .key.homeglow{border-color:var(--ok);border-style:solid;box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 45%,transparent)}
 .nokb{display:flex;gap:12px;align-items:center;background:var(--surface);border:2px solid var(--bad);border-radius:16px;padding:12px 14px;margin:6px 0 12px}
 .nokb .klik{width:56px;height:56px}
@@ -472,13 +488,14 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div class="toast" id="toast" role="status" hidden></div>
 
 <!-- перерва між уроками — поверх сторінки -->
-<div class="overlay" id="breakBox" role="dialog" aria-labelledby="brkTitle" hidden>
+<div class="overlay" id="breakBox" role="dialog" aria-modal="true" aria-labelledby="brkTitle" hidden>
   <div class="breakbox">
-    <svg class="klik" id="brkKlik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
     <h2 id="brkTitle"></h2>
+    <div class="brk-art" id="brkArt" aria-hidden="true"></div>
     <p id="brkText"></p>
     <div class="breaknum" id="brkNum"></div>
-    <button class="btn" id="brkBtn"></button>
+    <div class="brkbar"><i id="brkBar"></i></div>
+    <p class="brknote">Вікно закриється саме, коли час вийде. Зроби вправу разом із малюнком!</p>
   </div>
 </div>
 
@@ -522,10 +539,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051307"></script>
-<script src="progress.js?v=202611051307" defer></script>
-<script src="words.js?v=202611051307"></script>
-<script src="lessons.js?v=202611051307"></script>
+<script src="config.js?v=202611051314"></script>
+<script src="progress.js?v=202611051314" defer></script>
+<script src="words.js?v=202611051314"></script>
+<script src="lessons.js?v=202611051314"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -617,7 +634,7 @@ $("btnLogin").onclick=async()=>{
   finally{b.disabled=false;}
 };
 [$("inClass"),$("inCode")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()}));
-$("logout").onclick=()=>{typedMs=0; delete state.settings.eggs; delete state.settings.cursor; state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
+$("logout").onclick=()=>{typedMs=0; saveRest(); delete state.settings.eggs; delete state.settings.cursor; state.student=null; state.lessons={}; state.history=[]; state.keys={}; save(); metroStop(); $("inCode").value=""; show("vLogin"); $("inClass").focus();};
 
 /* список уроків */
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
@@ -729,31 +746,53 @@ function countdown(n,done){
 /* ---------- здорові звички: поради й перерви ---------- */
 const POSTURE_TIPS=["Спина рівна, стопи стоять на підлозі.","Плечі опущені й розслаблені.","Зап'ястя не лежать на краю столу.","Екран — приблизно на відстані витягнутої руки.","Верх екрана — не вище рівня очей."];
 const REST_TIPS=["Кліпни 10 разів, щоб очі відпочили.","Подивись на щось далеко кілька секунд.","Потруси кистями, щоб вони відпочили.","Розправ плечі й потягнись угору."];
+// Анімовані малюнки до вправ: показують, що саме робити.
+const FACE=(cx,cy,r)=>`<circle class="b-face" cx="${cx}" cy="${cy}" r="${r}"/><path class="b-st" d="M${cx-r*.36} ${cy+r*.45}Q${cx} ${cy+r*.75} ${cx+r*.36} ${cy+r*.45}"/>`;
+const EYES=(cx,cy,d,cls)=>[-1,1].map(k=>`<g class="${cls==="b-lid"?cls:""}"><ellipse class="b-white" cx="${cx+k*d}" cy="${cy}" rx="12" ry="13"/><circle class="b-pupil${cls==="b-lid"?"":" "+cls}" cx="${cx+k*d}" cy="${cy+1}" r="5.5"/></g>`).join("");
+const HAND=(x,thumb)=>`<g class="b-fingers">${[[1,30],[11,37],[21,35],[31,27]].map(([dx,h])=>`<rect class="b-face" x="${x+dx}" y="${64-h}" width="9" height="${h}" rx="4.5"/>`).join("")}</g>`+
+  `<rect class="b-face" x="${thumb>0?x+35:x-5}" y="62" width="10" height="26" rx="5" transform="rotate(${-32*thumb} ${thumb>0?x+40:x} 88)"/><rect class="b-face" x="${x}" y="56" width="41" height="42" rx="11"/>`;
+const BREAK_ART={
+  far:`<svg viewBox="0 0 240 140">${FACE(62,72,42)}${EYES(62,62,17,"b-look")}<path class="b-gaze" d="M112 62H158"/><path class="b-arrow" d="M150 54l9 8-9 8"/>`+
+    `<rect class="b-sky" x="170" y="22" width="60" height="72" rx="5"/><circle class="b-sun" cx="186" cy="40" r="7"/><path class="b-st" d="M214 92V76"/><circle class="b-tree" cx="214" cy="68" r="11"/><path class="b-st" d="M200 22V94M170 58H230"/></svg>`,
+  roll:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}${EYES(120,62,20,"b-roll")}<path class="b-arrow" d="M70 30A64 64 0 0 1 170 30M160 22l11 8-13 4"/></svg>`,
+  blink:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}<path class="b-st" d="M89 62q11 7 22 0M129 62q11 7 22 0"/>${EYES(120,62,20,"b-lid")}</svg>`,
+  hands:`<svg viewBox="0 0 240 140">${HAND(56,1)}${HAND(143,-1)}<path class="b-arrow" d="M30 44V24M22 32l8-9 8 9M210 44V24M202 32l8-9 8 9"/></svg>`,
+  shrug:`<svg viewBox="0 0 240 140">${FACE(120,36,20)}<circle class="b-pupil" cx="113" cy="33" r="2.5"/><circle class="b-pupil" cx="127" cy="33" r="2.5"/><rect class="b-body" x="94" y="62" width="52" height="66" rx="14"/>`+
+    `<g class="b-shrug"><rect class="b-body" x="74" y="64" width="17" height="54" rx="8.5"/><rect class="b-body" x="149" y="64" width="17" height="54" rx="8.5"/><path class="b-arrow" d="M48 96V68M39 78l9-11 9 11M192 96V68M183 78l9-11 9 11"/></g></svg>`
+};
 const BREAKS=[
-  {title:"Очі дивляться вдалину",text:"Подивись у вікно або на найдальшу точку в класі. Просто дивись і нікуди не поспішай.",sec:20,anim:"far"},
-  {title:"Руки відпочивають",text:"Стисни кулаки й розтисни 5 разів. Потім м'яко потруси кистями.",sec:20,anim:"shake"},
-  {title:"Очі кліпають",text:"Повільно покліпай 10 разів. Потім заплющ очі й посидь так, доки не закінчиться час.",sec:20,anim:"blink"},
-  {title:"Плечі й спина",text:"Підніми плечі до вух і повільно опусти 5 разів. Потім потягнись угору.",sec:25,anim:"lift"}
+  {title:"Очі дивляться вдалину",art:"far",text:"Подивись у вікно або на найдальшу точку в класі й затримай погляд, доки йде час."},
+  {title:"Руки відпочивають",art:"hands",text:"Стискай і розтискай кулаки разом із малюнком. Наприкінці м'яко потруси кистями."},
+  {title:"Очі малюють коло",art:"roll",text:"Не повертай голови. Повільно води очима по колу разом із малюнком."},
+  {title:"Плечі й спина",art:"shrug",text:"Підніми плечі до вух і повільно опусти, як на малюнку. Спину тримай рівно."},
+  {title:"Очі кліпають",art:"blink",text:"Повільно кліпай разом із малюнком. Наприкінці заплющ очі й відпочинь."}
 ];
 const BREAK_MS=(()=>{const v=Number((window.KLIK_CONFIG||{}).breakEvery); return isFinite(v)&&v>0?v*60000:0;})();
+const BREAK_SEC=(()=>{const v=Number((window.KLIK_CONFIG||{}).breakSeconds); return isFinite(v)&&v>=5?Math.min(180,Math.round(v)):30;})();
+const REST_KEY="klik-rest";
 let typedMs=0, postureNo=0, restNo=0, breakNo=0, breakTimer=null, breakDone=null; // typedMs: час друку після останньої перерви
-function closeBreak(){clearTimeout(breakTimer); $("breakBox").hidden=true; const done=breakDone; breakDone=null; done&&done();}
-function startBreak(done){
-  const ex=BREAKS[breakNo++%BREAKS.length], end=Date.now()+ex.sec*1000, b=$("brkBtn");
-  typedMs=0; breakDone=done; document.activeElement&&document.activeElement.blur();
-  $("brkTitle").textContent=`Перерва з Кліком: ${ex.title.toLowerCase()}`; $("brkText").textContent=ex.text;
-  $("brkKlik").setAttribute("class",`klik anim-${ex.anim}`);
-  b.textContent="Пропустити"; b.className="btn"; $("breakBox").hidden=false;
+// Час друку й незавершена перерва переживають оновлення сторінки: перезавантаженням перерву не пропустити.
+function saveRest(end=0){try{localStorage.setItem(REST_KEY,JSON.stringify({t:typedMs,no:breakNo,end}));}catch(e){}}
+function closeBreak(){
+  clearTimeout(breakTimer); $("breakBox").hidden=true; document.querySelector(".wrap").inert=false; saveRest();
+  const done=breakDone; breakDone=null; done&&done();
+}
+// Перерву не можна закрити чи пропустити: сторінка за вікном заблокована, а вікно зникає саме, коли вийде час.
+function startBreak(done,resumeEnd){
+  const ex=BREAKS[Math.max(0,resumeEnd?breakNo-1:breakNo++)%BREAKS.length], end=resumeEnd||Date.now()+BREAK_SEC*1000;
+  typedMs=0; breakDone=done||(()=>{}); saveRest(end);
+  document.activeElement&&document.activeElement.blur(); document.querySelector(".wrap").inert=true;
+  $("brkTitle").textContent=`Перерва з Кліком: ${ex.title.toLowerCase()}`; $("brkText").textContent=ex.text; $("brkArt").innerHTML=BREAK_ART[ex.art];
+  $("breakBox").hidden=false;
   const tick=()=>{
-    const left=Math.ceil((end-Date.now())/1000);
-    if(left<=0){$("brkNum").textContent="Готово!"; b.textContent="▶ Продовжити"; b.className="btn primary on"; b.focus(); return;}
-    $("brkNum").textContent=left;
-    if(ex.sec-left>=5) b.classList.add("on");
+    const ms=end-Date.now();
+    $("brkBar").style.width=Math.max(0,Math.min(100,100*(1-ms/(BREAK_SEC*1000))))+"%";
+    if(ms<=0){$("brkNum").textContent="Готово!"; breakTimer=setTimeout(closeBreak,1200); return;}
+    $("brkNum").textContent=Math.ceil(ms/1000);
     breakTimer=setTimeout(tick,250);
   };
   tick();
 }
-$("brkBtn").onclick=closeBreak;
 const COUNT=(()=>{const v=Number((window.KLIK_CONFIG||{}).countdown); return isFinite(v)&&v>=0?Math.min(10,Math.round(v)):3;})();
 function startLesson(id){
   if(breakDone) return;
@@ -962,7 +1001,7 @@ document.addEventListener("keydown",e=>{
   else{errs++; window.recordKey&&recordKey(L.layout,want,false); const s=$("strip"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");}
   renderLine(); updStats();
 });
-$("tBack").onclick=()=>{typedMs+=elapsed(); clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
+$("tBack").onclick=()=>{typedMs+=elapsed(); saveRest(); clearInterval(timer); metroStop(); countStop(); paused=false; setPausedUi(); renderList(); show("vList");};
 $("tPause").onclick=()=>{pause(); };
 $("tResume").onclick=()=>resume();
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause();});
@@ -970,7 +1009,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&t0) pause(
 /* ---------- результат ---------- */
 function finish(){
   clearInterval(timer); metroStop();
-  typedMs+=elapsed();
+  typedMs+=elapsed(); saveRest();
   $("rTip").textContent=`Порада від Кліка: ${REST_TIPS[restNo++%REST_TIPS.length]}`;
   const sec=Math.max(1,Math.round(elapsed()/1000));
   const acc=Math.max(0,Math.floor(100*(typed-errs)/typed));
@@ -1279,6 +1318,8 @@ if(state.student?.code){
   if(state.student?.cls) $("inClass").value=state.student.cls; // старий вхід без коду — просимо увійти з кодом
   show("vLogin"); ($("inClass").value?$("inCode"):$("inClass")).focus();
 }
+// продовжити відлік часу друку й незавершену перерву після оновлення сторінки
+try{const r=JSON.parse(localStorage.getItem(REST_KEY)||"null"); if(r){typedMs=r.t||0; breakNo=r.no||0; if(BREAK_MS&&r.end>Date.now()) startBreak(null,r.end);}}catch(e){}
 </script>
 </body>
 </html>
