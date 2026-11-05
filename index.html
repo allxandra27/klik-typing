@@ -216,6 +216,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .brkbar{width:100%;height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
 .brkbar i{display:block;height:100%;width:0;background:var(--ok)}
 .brknote{font-size:14px;color:var(--muted)}
+.brk-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;width:100%;text-align:center}
+.brk-gallery>div{display:grid;gap:6px;align-content:start;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px}
+.brk-gallery b{color:var(--ink)}
 .b-st{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .b-face{fill:var(--f-index);stroke:var(--ink);stroke-width:4}
 .b-white{fill:var(--surface);stroke:var(--ink);stroke-width:3}
@@ -229,6 +232,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .b-look{animation:bLook 5s ease-in-out infinite}
 .b-roll{animation:bRoll 4s linear infinite}
 .b-lid{transform-box:fill-box;transform-origin:center;animation:bBlink 1.8s ease-in-out infinite}
+.b-closed{opacity:0;animation:bClosed 1.8s ease-in-out infinite}
 .b-skin{fill:var(--f-index);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
 .b-crease{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;opacity:.45}
 .b-open{animation:bOpen 2.6s ease-in-out infinite}
@@ -237,7 +241,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes bGaze{to{stroke-dashoffset:-16}}
 @keyframes bLook{0%,12%{transform:translateX(-4px)}30%,100%{transform:translateX(5px)}}
 @keyframes bRoll{0%,100%{transform:translate(6px,0)}12.5%{transform:translate(4px,4px)}25%{transform:translate(0,6px)}37.5%{transform:translate(-4px,4px)}50%{transform:translate(-6px,0)}62.5%{transform:translate(-4px,-4px)}75%{transform:translate(0,-6px)}87.5%{transform:translate(4px,-4px)}}
-@keyframes bBlink{0%,50%,100%{transform:scaleY(1)}65%,85%{transform:scaleY(.08)}}
+@keyframes bBlink{0%,50%,100%{transform:scaleY(1);opacity:1}62%{transform:scaleY(.1);opacity:1}66%,84%{transform:scaleY(.1);opacity:0}88%{transform:scaleY(.1);opacity:1}}
+@keyframes bClosed{0%,62%,88%,100%{opacity:0}66%,84%{opacity:1}}
 @keyframes bOpen{0%,38%,100%{opacity:1}48%,90%{opacity:0}}
 @keyframes bFist{0%,38%,100%{opacity:0;transform:scale(1.06)}48%,90%{opacity:1;transform:scale(1)}}
 @keyframes bShrug{0%,25%,100%{transform:translateY(0)}50%,70%{transform:translateY(-10px)}}
@@ -543,10 +548,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051322"></script>
-<script src="progress.js?v=202611051322" defer></script>
-<script src="words.js?v=202611051322"></script>
-<script src="lessons.js?v=202611051322"></script>
+<script src="config.js?v=202611051327"></script>
+<script src="progress.js?v=202611051327" defer></script>
+<script src="words.js?v=202611051327"></script>
+<script src="lessons.js?v=202611051327"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -768,7 +773,7 @@ const BREAK_ART={
   far:`<svg viewBox="0 0 240 140">${FACE(62,72,42)}${EYES(62,62,17,"b-look")}<path class="b-gaze" d="M112 62H158"/><path class="b-arrow" d="M150 54l9 8-9 8"/>`+
     `<rect class="b-sky" x="170" y="22" width="60" height="72" rx="5"/><circle class="b-sun" cx="186" cy="40" r="7"/><path class="b-st" d="M214 92V76"/><circle class="b-tree" cx="214" cy="68" r="11"/><path class="b-st" d="M200 22V94M170 58H230"/></svg>`,
   roll:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}${EYES(120,62,20,"b-roll")}<path class="b-arrow" d="M70 30A64 64 0 0 1 170 30M160 22l11 8-13 4"/></svg>`,
-  blink:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}<path class="b-st" d="M89 62q11 7 22 0M129 62q11 7 22 0"/>${EYES(120,62,20,"b-lid")}</svg>`,
+  blink:`<svg viewBox="0 0 240 140">${FACE(120,72,50)}${EYES(120,62,20,"b-lid")}<path class="b-st b-closed" d="M88 62q12 8 24 0M128 62q12 8 24 0"/></svg>`,
   hands:`<svg viewBox="0 0 240 140">${HAND(false)}${HAND(true)}</svg>`,
   shrug:`<svg viewBox="0 0 240 140">${FACE(120,36,20)}<circle class="b-pupil" cx="113" cy="33" r="2.5"/><circle class="b-pupil" cx="127" cy="33" r="2.5"/><rect class="b-body" x="94" y="62" width="52" height="66" rx="14"/>`+
     `<g class="b-shrug"><rect class="b-body" x="74" y="64" width="17" height="54" rx="8.5"/><rect class="b-body" x="149" y="64" width="17" height="54" rx="8.5"/><path class="b-arrow" d="M48 96V68M39 78l9-11 9 11M192 96V68M183 78l9-11 9 11"/></g></svg>`
@@ -1333,6 +1338,14 @@ if(state.student?.code){
 }
 // продовжити відлік часу друку й незавершену перерву після оновлення сторінки
 try{const r=JSON.parse(localStorage.getItem(REST_KEY)||"null"); if(r){typedMs=r.t||0; breakNo=r.no||0; if(BREAK_MS&&r.end>Date.now()) startBreak(null,r.end);}}catch(e){}
+// Перегляд для вчителя: адреса з «?breaks» показує всі вправи для перерв одразу, без очікування.
+if(new URLSearchParams(location.search).has("breaks")){
+  const d=document.createElement("div"); d.className="overlay";
+  d.innerHTML=`<div class="gamebox" style="width:min(940px,100%)"><h2>Вправи для перерв</h2><p>Перегляд для вчителя. На уроці вправи з'являються по одній у цьому порядку, кожна на ${BREAK_SEC} с.</p>`+
+    `<div class="brk-gallery">${BREAKS.map((b,i)=>`<div><b>${i+1}. ${b.title}</b><div class="brk-art">${BREAK_ART[b.art]}</div><span>${b.text}</span></div>`).join("")}</div>`+
+    `<a class="btn primary" style="text-decoration:none" href="./">До тренажера</a></div>`;
+  document.body.appendChild(d);
+}
 </script>
 </body>
 </html>
