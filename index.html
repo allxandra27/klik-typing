@@ -195,7 +195,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes pop{from{transform:scale(1.6);opacity:.3}to{transform:scale(1);opacity:1}}
 .themebtn{width:40px;height:40px;padding:0;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-size:18px;line-height:1;flex:none}
 .themebtn:hover{border-color:var(--ink)}
-.forecast{min-width:19em}
+.forecast{flex-basis:100%} /* завжди окремим рядком, щоб нічого не стрибало */
 .forecast b{color:var(--pop);letter-spacing:.04em}
 .forecast .off{color:var(--line)}
 .forecast b.pop{display:inline-block;animation:pop .35s ease-out}
@@ -385,7 +385,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="bar"><h2 id="tTitle"></h2><button class="btn small" id="tPause" title="Пауза (Esc)">⏸ Пауза</button><button class="btn small" id="tBack">← До уроків</button></div>
     <div class="say" style="margin:4px 0 10px"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true" style="width:64px;height:64px"><use href="#klik"/></svg>
       <div class="bubble" id="tBubble"></div></div>
-    <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span><span class="forecast" title="Скільки зірочок буде, якщо далі друкувати без помилок">Прогноз: <b id="sStars"></b> <small id="sRoom"></small></span></div>
+    <div class="stats"><span>Рядок <b id="sLine">1</b> з <b id="sLines">1</b></span><span>Помилки: <b id="sErr">0</b></span><span>Точність: <b id="sAcc">100</b>%</span><span>Швидкість: <b id="sCpm">0</b> зн/хв</span><span title="Наскільки рівно ти друкуєш: що однаковіші паузи між натисканнями, то більший відсоток">Ритмічність: <b id="sRhythm">—</b></span><span class="forecast" title="Скільки зірочок буде, якщо далі друкувати без помилок">Прогноз: <b id="sStars"></b> <small id="sRoom"></small></span></div>
     <div class="progress"><i id="pBar"></i></div>
     <div class="metro">
       <label class="metro-on"><input type="checkbox" id="metroOn"> Метроном</label>
@@ -548,10 +548,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051327"></script>
-<script src="progress.js?v=202611051327" defer></script>
-<script src="words.js?v=202611051327"></script>
-<script src="lessons.js?v=202611051327"></script>
+<script src="config.js?v=202611051820"></script>
+<script src="progress.js?v=202611051820" defer></script>
+<script src="words.js?v=202611051820"></script>
+<script src="lessons.js?v=202611051820"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -962,6 +962,7 @@ function updForecast(){
 }
 function updStats(){
   updForecast();
+  const rs=rhythmStats(); $("sRhythm").textContent=rs?rs.rhythm+"%":"—"; // з'являється після кількох натискань
   $("sErr").textContent=errs;
   $("sAcc").textContent=typed?Math.max(0,Math.floor(100*(typed-errs)/typed)):100;
   const min=elapsed()/60000;
@@ -1147,19 +1148,30 @@ function seasonEgg(d=new Date()){
 }
 
 /* ---------- Золотий курсор: разова гра-сюрприз ---------- */
-const GOLD=(window.KLIK_CONFIG||{}).goldenCursor;
-function checkGoldenCursor(acc,R){
-  if(!GOLD||!R||!LESSONS.includes(L)||acc<GOLD.accuracy||R.rhythm<GOLD.rhythm) return;
-  // Кожен урок рахується один раз. Запрошення витрачається, щойно з'явилося: другого шансу немає.
+const GOLD=(()=>{
+  const g=(window.KLIK_CONFIG||{}).goldenCursor; if(!g) return null;
+  const lv=(g.levels||[{accuracy:g.accuracy,rhythm:g.rhythm,lessons:1},{accuracy:g.accuracy,rhythm:g.rhythm,lessons:g.every||3}])
+    .filter(l=>l&&l.accuracy>0&&l.rhythm>=0&&l.lessons>0);
+  return lv.length?lv:null;
+})();
+// Стан: done — уроки, які вже зараховано (кожен лише раз); invites — скільки запрошень уже було; progress — зараховано до наступного.
+function cursorState(){
   const c=state.settings.cursor=state.settings.cursor||{done:[]};
-  if(c.done.includes(L.id)) return;
-  c.done.push(L.id); save();
-  const n=c.done.length;
-  if(n!==1&&n%GOLD.every) return;
-  // Ігри чергуються по колу: лабіринт, міст, клавіатура.
-  game=GAMES[GAME_ORDER[(n===1?0:n/GOLD.every)%GAME_ORDER.length]]; gameLay=L.layout;
+  if(c.invites===undefined){const n=c.done.length; c.invites=n?1+Math.floor(n/3):0; c.progress=n<3?Math.max(0,n-1):n%3;} // запис зі старих правил
+  return c;
+}
+const goldLevel=c=>GOLD[Math.min(c.invites,GOLD.length-1)];
+function checkGoldenCursor(acc,R){
+  if(!GOLD||!R||!LESSONS.includes(L)) return;
+  const c=cursorState(), lv=goldLevel(c);
+  if(acc<lv.accuracy||R.rhythm<lv.rhythm||c.done.includes(L.id)) return;
+  c.done.push(L.id); c.progress++; save();
+  if(c.progress<lv.lessons) return;
+  // Запрошення витрачається, щойно з'явилося: другого шансу немає. Далі вимоги вищі.
+  c.invites++; c.progress=0; save();
+  game=GAMES[GAME_ORDER[(c.invites-1)%GAME_ORDER.length]]; gameLay=L.layout;
   clearRain(); document.activeElement&&document.activeElement.blur();
-  $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «${game.name}».`;
+  $("gWhy").textContent=`${L.title}: ти надрукував точно (${acc}%) і рівно (ритмічність ${R.rhythm}%)${lv.lessons>1?`, і це вже ${lv.lessons}-й такий урок`:""}. За це Клік запрошує тебе в секретну гру «${game.name}».`;
   $("gInvite").hidden=false; $("gPlayfield").hidden=true; $("gAfter").hidden=true; $("gameBox").hidden=false;
 }
 const GAME_MS=120000, MAZE_LEVELS=[[9,6],[13,8],[17,10]], BRIDGE_LEVELS=[5,6,7];
@@ -1230,10 +1242,11 @@ function drawBridge(){
 const plNew=n=>n%10===1&&n%100!==11?"новий урок":n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?"нові уроки":"нових уроків";
 // Скільки ще нових уроків з потрібним результатом лишилося до наступного запрошення.
 function nextInviteText(){
-  const n=(state.settings.cursor?.done||[]).length, need=(Math.floor(n/GOLD.every)+1)*GOLD.every-n;
-  const left=LESSONS.filter(l=>!(state.settings.cursor?.done||[]).includes(l.id)).length;
+  const c=cursorState(), lv=goldLevel(c), need=lv.lessons-c.progress;
+  const left=LESSONS.filter(l=>!c.done.includes(l.id)).length;
   if(left<need) return "Ти зібрав майже всі Золоті курсори, які сховав Клік. Оце так результат!";
-  return `Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${GOLD.accuracy}% і ритмічністю від ${GOLD.rhythm}%. Уроки, за які вже було нараховано, повторно не рахуються.`;
+  const harder=c.invites>0&&c.invites<GOLD.length&&(lv.accuracy>GOLD[c.invites-1].accuracy||lv.rhythm>GOLD[c.invites-1].rhythm);
+  return `${harder?"Тепер завдання складніше! ":""}Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${lv.accuracy}% і ритмічністю від ${lv.rhythm}%. Уроки, які вже було зараховано, повторно не рахуються.`;
 }
 /* «Збери клавіатуру»: учень клацає місце клавіші. Питаємо лише вивчені літери, решта вже стоїть на місці. */
 const KB_ROW_ORDER=[1,0,2], KB_ROW_NAME=["верхній ряд","основний ряд","нижній ряд"];
