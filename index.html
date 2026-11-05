@@ -231,6 +231,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .bplank{fill:none;stroke:var(--muted);stroke-width:.8;stroke-dasharray:2 1.5}
 .bplank.on{fill:var(--pop);stroke:var(--ink);stroke-dasharray:none}
 .bword{text-align:center;margin:10px 0 0}
+.askrow{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;color:var(--ink);margin-bottom:10px}
+.askkey{background:var(--pop);color:var(--pop-ink);border-color:var(--ink);--kw:48px;font-size:22px}
+#kbGame{--kw:min(40px,calc((min(100vw,640px) - 84px - 11*var(--g))/12));justify-content:center;margin:0 auto;width:max-content;max-width:100%}
+#kbGame .row.r3{padding-left:calc(var(--kw)*.8)}
+#kbGame .key{padding:0;font-family:inherit}
+#kbGame .key.slot{background:var(--surface);border-style:dashed;border-color:var(--muted);cursor:pointer}
+#kbGame .key.slot:hover{border-color:var(--ink);border-style:solid}
+#kbGame .key:not(.slot){cursor:default}
+#kbGame .key.shake{animation:shake .25s;border-color:var(--bad)}
 .anim-far{animation:brkFar 6s ease-in-out infinite}
 .anim-blink{animation:brkBlink 2.4s ease-in-out infinite}
 .anim-shake{animation:brkShake .7s ease-in-out infinite}
@@ -486,6 +495,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <p id="gHint" style="margin:6px 0 10px">Веди Кліка стрілками до золотого курсора</p>
       <svg id="mazeSvg" role="img" aria-label="Лабіринт"><path id="mazeWalls"/><path class="gold-cursor" id="mazeGoal" d="M0 0V7.4L2 5.6 3.4 8.6 4.8 8 3.4 5H6Z"/><g id="mazeKlik"><svg class="klik" x="1" y="1" width="8" height="8" viewBox="0 0 260 260"><use href="#klik"/></svg></g></svg>
       <div id="bridgeBox" hidden><svg id="bridgeSvg" viewBox="0 0 200 62" role="img" aria-label="Міст через річку"></svg><div class="strip bword" id="bWord"></div></div>
+      <div id="kbBox" hidden><div class="askrow">Де живе клавіша <span class="key askkey" id="kbAsk"></span>?</div><div class="kb" id="kbGame"></div></div>
       <button class="btn" id="gClose" style="margin-top:12px">Завершити гру</button>
     </div>
     <div id="gAfter" hidden>
@@ -510,10 +520,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611050950"></script>
-<script src="progress.js?v=202611050950" defer></script>
-<script src="words.js?v=202611050950"></script>
-<script src="lessons.js?v=202611050950"></script>
+<script src="config.js?v=202611051220"></script>
+<script src="progress.js?v=202611051220" defer></script>
+<script src="words.js?v=202611051220"></script>
+<script src="lessons.js?v=202611051220"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -1067,7 +1077,7 @@ function checkGoldenCursor(acc,R){
   c.done.push(L.id); save();
   const n=c.done.length;
   if(n!==1&&n%GOLD.every) return;
-  // Ігри чергуються: перше запрошення — лабіринт, друге — міст, і знову по колу.
+  // Ігри чергуються по колу: лабіринт, міст, клавіатура.
   game=GAMES[GAME_ORDER[(n===1?0:n/GOLD.every)%GAME_ORDER.length]]; gameLay=L.layout;
   clearRain(); document.activeElement&&document.activeElement.blur();
   $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «${game.name}».`;
@@ -1078,10 +1088,12 @@ const GAMES={
   maze:{name:"Клік у лабіринті",unit:"лабіринтів",total:MAZE_LEVELS.length,start:startMaze,allDone:"Усі лабіринти пройдено!",
     how:"Веди Кліка стрілками до золотого курсора"},
   bridge:{name:"Міст через річку",unit:"річок",total:BRIDGE_LEVELS.length,start:startBridge,allDone:"Усі мости збудовано!",
-    how:"Друкуй слово: кожне слово кладе дошку. Помилка — дошка падає у воду, і слово починається спочатку."}
+    how:"Друкуй слово: кожне слово кладе дошку. Помилка — дошка падає у воду, і слово починається спочатку."},
+  keys:{name:"Збери клавіатуру",unit:"рядів",total:3,start:startKeys,allDone:"Клавіатуру зібрано!",
+    how:"Клавіші розсипалися! Клацай мишкою порожнє місце, де живе клавіша."}
 };
-const GAME_ORDER=["maze","bridge"];
-let game=GAMES.maze, gameLay="ua", maze=null, bridge=null, gameEnd=0, gameTimer=null, gameLevel=0;
+const GAME_ORDER=["maze","bridge","keys"];
+let game=GAMES.maze, gameLay="ua", maze=null, bridge=null, kbGame=null, gameEnd=0, gameTimer=null, gameLevel=0;
 function buildMaze(w,h){
   const open=Array.from({length:h},()=>Array.from({length:w},()=>new Set())), seen=new Set(["0,0"]), stack=[[0,0]];
   const DIRS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
@@ -1144,8 +1156,45 @@ function nextInviteText(){
   if(left<need) return "Ти зібрав майже всі Золоті курсори, які сховав Клік. Оце так результат!";
   return `Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${GOLD.accuracy}% і ритмічністю від ${GOLD.rhythm}%. Уроки, за які вже було нараховано, повторно не рахуються.`;
 }
+/* «Збери клавіатуру»: учень клацає місце клавіші. Питаємо лише вивчені літери, решта вже стоїть на місці. */
+const KB_ROW_ORDER=[1,0,2], KB_ROW_NAME=["верхній ряд","основний ряд","нижній ряд"];
+function startKeys(){
+  if(!kbGame){
+    const seen=knownWords(gameLay).seen, letter=c=>/^[a-zа-яіїєґ]$/.test(c);
+    const ask=LAYOUT[gameLay].map(row=>row.filter(c=>letter(c)&&seen.has(c)));
+    let rows=KB_ROW_ORDER.filter(r=>ask[r].length>=3);
+    if(!rows.length){rows=[1]; ask[1]=LAYOUT[gameLay][1].filter(letter);}
+    kbGame={ask,rows,asked:new Set(rows.flatMap(r=>ask[r])),placed:new Set(),queue:[],cur:"",row:1};
+    game.total=rows.length;
+  }
+  kbGame.row=kbGame.rows[gameLevel];
+  kbGame.queue=[...kbGame.ask[kbGame.row]].sort(()=>Math.random()-.5);
+  nextKey();
+}
+function nextKey(){
+  kbGame.cur=kbGame.queue.pop();
+  if(!kbGame.cur){levelDone(); return;}
+  drawKeys();
+}
+function drawKeys(){
+  const g=kbGame, total=g.ask[g.row].length;
+  $("kbGame").innerHTML=LAYOUT[gameLay].map((row,r)=>`<div class="row r${r+1}">${row.map((ch,c)=>{
+    const home=HOME[gameLay].includes(ch)?" home":"";
+    if(g.asked.has(ch)&&!g.placed.has(ch)) return `<button class="key slot${home}" data-ch="${ch}" aria-label="порожнє місце"></button>`;
+    return `<button class="key ${g.placed.has(ch)?FCOL[c]:"dim"}${home}" data-ch="${ch}" tabindex="-1">${ch}</button>`;
+  }).join("")}</div>`).join("");
+  $("kbAsk").textContent=g.cur;
+  $("gLevel").textContent=`Ряд ${gameLevel+1} з ${g.rows.length} · клавіш: ${total-g.queue.length-1} з ${total}`;
+  $("gHint").textContent=`${game.how} Зараз збираємо ${KB_ROW_NAME[g.row]}.`;
+}
+$("kbGame").addEventListener("click",e=>{
+  const b=e.target.closest(".key.slot"); if(!kbGame||!b) return;
+  if(b.dataset.ch===kbGame.cur){kbGame.placed.add(kbGame.cur); nextKey(); return;}
+  $("gHint").textContent="Ні, тут живе інша клавіша. Спробуй ще раз!";
+  b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+});
 function endGame(text,title="Гру завершено!"){
-  clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null;
+  clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null; kbGame=null;
   $("gAfterTitle").textContent=title; $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
   $("gInvite").hidden=true; $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
 }
@@ -1155,7 +1204,7 @@ function gameTick(){
   if(left<=0){endGame(`Час вийшов! Пройдено ${game.unit}: ${gameLevel} з ${game.total}. Гарна гра!`); return;}
   gameTimer=setTimeout(gameTick,250);
 }
-function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null; $("gameBox").hidden=true;}
+function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null; kbGame=null; $("gameBox").hidden=true;}
 function levelDone(){
   gameLevel++;
   if(gameLevel<game.total) game.start();
@@ -1167,7 +1216,7 @@ $("gDone").onclick=closeGame;
 $("gPlay").onclick=()=>{
   gameLevel=0; gameEnd=Date.now()+GAME_MS;
   $("gInvite").hidden=true; $("gPlayfield").hidden=false; $("gPlay").blur();
-  $("mazeSvg").toggleAttribute("hidden",game!==GAMES.maze); $("bridgeBox").hidden=game!==GAMES.bridge;
+  $("mazeSvg").toggleAttribute("hidden",game!==GAMES.maze); $("bridgeBox").hidden=game!==GAMES.bridge; $("kbBox").hidden=game!==GAMES.keys;
   $("gHint").textContent=game.how;
   game.start(); gameTick();
 };
