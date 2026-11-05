@@ -307,6 +307,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lgroup summary .gname{flex:1}
 .lgroup .gcount{font-family:var(--body);font-size:14px;color:var(--muted);font-weight:700;white-space:nowrap}
 .lgroup .lessons{padding-bottom:14px}
+.psecbody{padding:2px 0 16px}
+.ptabs{margin-top:22px}
 .lesson.current{border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 30%,transparent)}
 .listbar{display:flex;justify-content:flex-end;margin:-6px 0 6px;gap:8px;flex-wrap:wrap}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:8px 0 6px}
@@ -464,34 +466,44 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vProgress" hidden>
     <div class="bar"><h2>Мій прогрес</h2><button class="btn small" id="pBack">← До уроків</button></div>
     <div class="tiles" id="pTiles"></div>
-    <h3 class="psec" id="pLeadersSec" hidden>Лідери тижня в моїй групі</h3>
-    <div class="leaders" id="pLeaders" hidden></div>
-    <h3 class="psec">Мій шлях</h3>
-    <div id="pPath"></div>
-    <h3 class="psec">Як я росту</h3>
-    <div class="pgrow">
-      <label for="pLesson">Урок:</label> <select id="pLesson"></select>
-      <span class="pnote" id="pGrowNote"></span>
-    </div>
-    <div class="charts">
-      <figure class="chart" id="chSpeed"></figure>
-      <figure class="chart" id="chAcc"></figure>
-    </div>
-    <details class="ptable"><summary>Показати всі спроби таблицею</summary><div id="pTable"></div></details>
-    <h3 class="psec">Найважчі клавіші</h3>
-    <div class="pgrow">
-      <span class="seg" role="group" aria-label="Що показувати">
-        <button class="chip" id="hmErr" aria-pressed="true">Помилки</button><button class="chip" id="hmSlow" aria-pressed="false">Затримки</button>
-      </span>
-      <span class="seg" role="group" aria-label="Розкладка">
-        <button class="chip" id="hmUa" aria-pressed="true">Українська</button><button class="chip" id="hmEn" aria-pressed="false">English</button>
-      </span>
-    </div>
-    <div class="kb heat" id="pHeat"></div>
-    <div class="heatlegend"><span>менше</span><i></i><span>більше</span></div>
-    <p class="pnote" id="pHeatNote"></p>
     <h3 class="psec">Досягнення</h3>
     <div class="badges" id="pBadges"></div>
+    <div class="tabs ptabs" id="pTabs" role="tablist"></div>
+    <details class="lgroup" id="pSecPath" open>
+      <summary><span class="gname">Мій шлях</span><span class="gcount" id="pPathCount"></span></summary>
+      <div class="psecbody"><div id="pPath"></div></div>
+    </details>
+    <details class="lgroup" id="pSecGrow">
+      <summary><span class="gname">Як я росту</span><span class="gcount">графіки швидкості й точності</span></summary>
+      <div class="psecbody">
+        <div class="pgrow">
+          <label for="pLesson">Урок:</label> <select id="pLesson"></select>
+          <span class="pnote" id="pGrowNote"></span>
+        </div>
+        <div class="charts">
+          <figure class="chart" id="chSpeed"></figure>
+          <figure class="chart" id="chAcc"></figure>
+        </div>
+        <details class="ptable"><summary>Показати всі спроби таблицею</summary><div id="pTable"></div></details>
+      </div>
+    </details>
+    <details class="lgroup" id="pSecHeat">
+      <summary><span class="gname">Найважчі клавіші</span><span class="gcount">де помилки й затримки</span></summary>
+      <div class="psecbody">
+        <div class="pgrow">
+          <span class="seg" role="group" aria-label="Що показувати">
+            <button class="chip" id="hmErr" aria-pressed="true">Помилки</button><button class="chip" id="hmSlow" aria-pressed="false">Затримки</button>
+          </span>
+        </div>
+        <div class="kb heat" id="pHeat"></div>
+        <div class="heatlegend"><span>менше</span><i></i><span>більше</span></div>
+        <p class="pnote" id="pHeatNote"></p>
+      </div>
+    </details>
+    <details class="lgroup" id="pSecLeaders">
+      <summary><span class="gname">Лідери тижня в моїй групі</span></summary>
+      <div class="psecbody"><div class="leaders" id="pLeaders"></div></div>
+    </details>
   </section>
 
   <!-- результат -->
@@ -581,10 +593,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611052119"></script>
-<script src="progress.js?v=202611052119" defer></script>
-<script src="words.js?v=202611052119"></script>
-<script src="lessons.js?v=202611052119"></script>
+<script src="config.js?v=202611052125"></script>
+<script src="progress.js?v=202611052125" defer></script>
+<script src="words.js?v=202611052125"></script>
+<script src="lessons.js?v=202611052125"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -758,6 +770,7 @@ function lessonCard(l,next){
     <span class="stars">${starsHtml(p?.stars||0)}</span><span class="meta">${p?`Найкраще: ${p.acc}% · ${p.cpm} зн/хв`:"Ще не пройдено"}</span></button>`;
 }
 function renderList(){
+  window.prefetchLeaders&&prefetchLeaders(); // рейтинг буде готовий ще до натискання «Лідери»
   const done=LESSONS.filter(l=>starsOf(l)>=3).length;
   $("listBubble").innerHTML=done===0?`Натисни велику кнопку нижче — і вперед! Пальчики — на основну позицію!`:
     done===LESSONS.length?`Ого, усі уроки на 3 зірочки! <b>Клік тобою пишається!</b> 🏆`:
@@ -1158,7 +1171,7 @@ function sendResult(r){
   $("rSync").textContent="Надсилаю результат учителю…";
   fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify(Object.assign({name:state.student.name,cls:state.student.cls,code:state.student.code||"",state:stateBlob()},r))})
-   .then(()=>$("rSync").textContent="Результат збережено в таблиці ✓")
+   .then(()=>{$("rSync").textContent="Результат збережено в таблиці ✓"; window.leadersStale&&leadersStale();})
    .catch(()=>$("rSync").textContent="Не вдалося надіслати (немає інтернету?). Результат збережено на цьому комп'ютері.");
 }
 

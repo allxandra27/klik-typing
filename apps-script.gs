@@ -154,10 +154,25 @@ function historyOf(s) {
 /* ---------- лідери тижня ---------- */
 // Рейтинг групи учня: усі учні групи за спаданням НОВИХ зірочок, здобутих з понеділка (за часом таблиці).
 // Рейтинг бачать лише учні цієї самої групи (потрібен код). Вправи «слабкі клавіші» не рахуються.
+// Готовий рейтинг групи лежить у кеші до 5 хвилин і скидається, щойно хтось із групи надішле новий результат.
 function leadersOf(me) {
+  const cache = CacheService.getScriptCache(), key = 'leaders:' + groupKey(me.group);
+  let data = null;
+  try { data = JSON.parse(cache.get(key) || 'null'); } catch (e) {}
+  if (!data) {
+    data = groupLeaders(me.group);
+    try { cache.put(key, JSON.stringify(data), 300); } catch (e) {}
+  }
+  const mine = data.list.find(x => x.code === norm(me.code)) || { gain: 0, place: null };
+  return { ok: true, since: data.since, size: data.list.length,
+    top: data.list.map(x => ({ place: x.place, name: x.name, gain: x.gain, total: x.total, me: x.code === norm(me.code) })),
+    me: { place: mine.place, gain: mine.gain } };
+}
+
+function groupLeaders(group) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const st = ss.getSheetByName(STUDENTS), sh = ss.getSheetByName(SHEET_NAME);
-  const g = groupKey(me.group), tz = ss.getSpreadsheetTimeZone(), day = d => Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+  const g = groupKey(group), tz = ss.getSpreadsheetTimeZone(), day = d => Utilities.formatDate(d, tz, 'yyyy-MM-dd');
   const now = new Date(), dow = Number(Utilities.formatDate(now, tz, 'u')) || now.getDay() || 7; // 1 — понеділок
   const monday = day(new Date(now.getTime() - (dow - 1) * 86400000));
   const studs = st.getRange(2, 1, st.getLastRow() - 1, 3).getValues()
@@ -179,14 +194,11 @@ function leadersOf(me) {
     Object.keys(s.week).forEach(id => { gain += Math.max(0, s.week[id] - (s.before[id] || 0)); });
     const ids = {}; Object.keys(s.before).concat(Object.keys(s.week)).forEach(id => { ids[id] = Math.max(s.before[id] || 0, s.week[id] || 0); });
     Object.keys(ids).forEach(id => { total += ids[id]; });
-    return { name: s.name, gain: gain, total: total, me: s.code === norm(me.code) };
+    return { name: s.name, code: s.code, gain: gain, total: total };
   }).sort((a, b) => b.gain - a.gain || b.total - a.total);
   let place = 0, prev = null;
   list.forEach(x => { if (x.gain !== prev) { place++; prev = x.gain; } x.place = place; });
-  const mine = list.find(x => x.me) || { gain: 0, place: null };
-  return { ok: true, since: monday, size: studs.length,
-    top: list.map(x => ({ place: x.place, name: x.name, gain: x.gain, total: x.total, me: x.me })),
-    me: { place: mine.place, gain: mine.gain } };
+  return { since: monday, list: list };
 }
 
 function stateOf(s) {
@@ -214,6 +226,7 @@ function doPost(e) {
       num(d.stars), num(d.accuracy), num(d.cpm), num(d.errors), num(d.seconds),
       num(d.rhythm), num(d.metronome), num(d.tempo), num(d.beat), clean(s ? s.code : '')
     ]);
+    try { CacheService.getScriptCache().remove('leaders:' + groupKey(s ? s.group : d.cls)); } catch (e) {} // рейтинг групи змінився
   }
   if (s && d.state) saveState(ss, s, d.state);
   return ContentService.createTextOutput('ok');

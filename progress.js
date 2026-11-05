@@ -44,10 +44,17 @@ function renderTiles() {
 }
 
 /* ---------- мій шлях ---------- */
+const progTab = () => TABS.find(t => t.id === currentTab());
+function renderProgTabs() {
+  const tab = progTab();
+  $("pTabs").innerHTML = TABS.map(t => `<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${t === tab}">${t.name}</button>`).join("");
+}
 function renderPath() {
-  const groups = {}; LESSONS.forEach(l => (groups[l.group] = groups[l.group] || []).push(l));
+  const tab = progTab(), ls = LESSONS.filter(tab.has);
+  $("pPathCount").textContent = `пройдено ${ls.filter(passed).length} з ${ls.length}`;
+  const groups = {}; ls.forEach(l => (groups[l.group] = groups[l.group] || []).push(l));
   let currentMarked = {};
-  $("pPath").innerHTML = Object.entries(groups).map(([g, ls]) => `<div class="pathgroup"><div class="pathname">${g}</div><div class="path">${
+  $("pPath").innerHTML = Object.entries(groups).map(([g, ls]) => `<div class="pathgroup"><div class="pathname">${tab.id === "code" ? g : shortGroup(g)}</div><div class="path">${
     ls.map(l => {
       const st = state.lessons[l.id]?.stars || 0, open = isOpen(l), ok = st >= 2;
       let cls = ok ? "done" : open ? "open" : "locked";
@@ -62,10 +69,10 @@ function renderPath() {
 /* ---------- графіки ---------- */
 function lessonsWithHistory() { const ids = new Set(state.history.map(a => a.id)); return LESSONS.filter(l => ids.has(l.id)); }
 function renderGrowth() {
-  const sel = $("pLesson"), list = lessonsWithHistory();
+  const sel = $("pLesson"), list = lessonsWithHistory().filter(progTab().has);
   if (!list.length) {
     sel.innerHTML = ""; sel.disabled = true;
-    $("pGrowNote").textContent = "Тут з'являться графіки, щойно ти пройдеш перший урок.";
+    $("pGrowNote").textContent = state.history.length ? "У цій вкладці ще немає пройдених уроків." : "Тут з'являться графіки, щойно ти пройдеш перший урок.";
     $("chSpeed").innerHTML = $("chAcc").innerHTML = $("pTable").innerHTML = ""; return;
   }
   sel.disabled = false;
@@ -134,6 +141,7 @@ function lineChart(el, title, A, series, yMax) {
 /* ---------- теплова клавіатура ---------- */
 let hmMode = "err", hmLayout = "ua";
 function renderHeat() {
+  hmLayout = currentTab() === "ua" ? "ua" : "en"; // розкладку визначає вибрана вкладка
   const K = state.keys[hmLayout] || {}, MIN = 5; // замало натискань — не робимо висновків
   const score = r => hmMode === "err" ? r.e / (r.n + r.e) : r.c ? r.t / r.c : 0;
   const ready = Object.entries(K).filter(([, r]) => (r.n + r.e) >= MIN && (hmMode === "err" || r.c >= 3));
@@ -152,12 +160,9 @@ function renderHeat() {
     top3.length ? (hmMode === "err" ? "Найчастіше помиляєшся на: " : "Найдовше шукаєш: ") + `<b>${top3.join(", ")}</b>. Наведи на клавішу, щоб побачити подробиці.` :
       "Жодної помилки — чудово!";
   ["hmErr", "hmSlow"].forEach(id => $(id).setAttribute("aria-pressed", (id === "hmErr") === (hmMode === "err")));
-  ["hmUa", "hmEn"].forEach(id => $(id).setAttribute("aria-pressed", (id === "hmUa") === (hmLayout === "ua")));
 }
 $("hmErr").onclick = () => { hmMode = "err"; renderHeat(); };
 $("hmSlow").onclick = () => { hmMode = "slow"; renderHeat(); };
-$("hmUa").onclick = () => { hmLayout = "ua"; renderHeat(); };
-$("hmEn").onclick = () => { hmLayout = "en"; renderHeat(); };
 
 /* ---------- досягнення ---------- */
 const BADGES = [
@@ -183,30 +188,56 @@ function renderBadges() {
 
 /* ---------- лідери тижня ---------- */
 const MEDAL = ["🥇", "🥈", "🥉"];
-// box — куди малювати; sec — заголовок розділу в «Моєму прогресі» (ховається разом зі списком, якщо рейтинг недоступний).
-function renderLeaders(box, sec) {
+// Рейтинг завантажується заздалегідь і запам'ятовується: кнопка «Лідери» показує його одразу, а свіжі дані підтягуються у фоні.
+let leadersCache = null, leadersPending = null; // {key, at, data} / {key, p}
+const leadersKey = () => state.student && state.student.code ? state.student.cls + "|" + state.student.code : null;
+function loadLeaders() {
+  const key = leadersKey();
+  if (!SHEET() || !key) return Promise.reject(new Error("no student"));
+  if (leadersCache && leadersCache.key === key && Date.now() - leadersCache.at < 60000) return Promise.resolve(leadersCache.data);
+  if (leadersPending && leadersPending.key === key) return leadersPending.p;
   const st = state.student;
-  const fail = () => { if (sec) sec.hidden = box.hidden = true; else box.innerHTML = `<p class="pnote">Рейтинг зараз недоступний. Перевір інтернет і спробуй пізніше.</p>`; };
-  if (!SHEET() || !st || !st.code) return fail();
-  if (sec) sec.hidden = false;
-  box.hidden = false;
-  box.innerHTML = `<p class="pnote">Завантажую рейтинг…</p>`;
-  fetch(`${SHEET()}?action=leaders&group=${encodeURIComponent(st.cls)}&code=${encodeURIComponent(st.code)}`).then(r => r.json()).then(d => {
-    if (!d.ok) return fail();
-    const rows = d.top.map(x => `<li class="${x.me ? "me" : ""}"><span>${x.gain > 0 ? MEDAL[x.place - 1] || x.place + "." : "—"} ${esc(x.name)}${x.me ? " (це ти!)" : ""}</span>` +
-      `<b class="${x.gain > 0 ? "" : "zero"}">${x.gain > 0 ? "+" : ""}${x.gain} ★</b></li>`).join("");
-    box.innerHTML = `<ol>${rows}</ol>` +
-      (d.me.gain > 0 ? "" : `<p class="pnote">У тебе поки немає нових зірочок цього тижня. Пройди урок на більше зірочок, ніж раніше!</p>`) +
-      `<p class="pnote">Рахуємо нові зірочки з понеділка: за новий урок або кращий результат у старому. Щопонеділка рейтинг починається заново.</p>`;
-  }).catch(fail);
+  const p = fetch(`${SHEET()}?action=leaders&group=${encodeURIComponent(st.cls)}&code=${encodeURIComponent(st.code)}`).then(r => r.json()).then(d => {
+    leadersPending = null;
+    if (!d.ok) throw new Error("leaders");
+    leadersCache = { key, at: Date.now(), data: d };
+    return d;
+  }, e => { leadersPending = null; throw e; });
+  leadersPending = { key, p };
+  return p;
+}
+function prefetchLeaders() { loadLeaders().catch(() => {}); }
+function leadersStale() { if (leadersCache) leadersCache.at = 0; } // після нового результату рейтинг треба оновити
+function leadersHtml(d) {
+  const rows = d.top.map(x => `<li class="${x.me ? "me" : ""}"><span>${x.gain > 0 ? MEDAL[x.place - 1] || x.place + "." : "—"} ${esc(x.name)}${x.me ? " (це ти!)" : ""}</span>` +
+    `<b class="${x.gain > 0 ? "" : "zero"}">${x.gain > 0 ? "+" : ""}${x.gain} ★</b></li>`).join("");
+  return `<ol>${rows}</ol>` +
+    (d.me.gain > 0 ? "" : `<p class="pnote">У тебе поки немає нових зірочок цього тижня. Пройди урок на більше зірочок, ніж раніше!</p>`) +
+    `<p class="pnote">Рахуємо нові зірочки з понеділка: за новий урок або кращий результат у старому. Щопонеділка рейтинг починається заново.</p>`;
+}
+function renderLeaders(box) {
+  const key = leadersKey(), known = leadersCache && leadersCache.key === key;
+  box.innerHTML = known ? leadersHtml(leadersCache.data) : `<p class="pnote">Завантажую рейтинг…</p>`;
+  loadLeaders().then(d => { if (leadersKey() === key) box.innerHTML = leadersHtml(d); })
+    .catch(() => { if (!known) box.innerHTML = `<p class="pnote">Рейтинг зараз недоступний. Перевір інтернет і спробуй пізніше.</p>`; });
 }
 
 /* ---------- екран ---------- */
-function renderProgress() { renderTiles(); renderLeaders($("pLeaders"), $("pLeadersSec")); renderPath(); renderGrowth(); renderHeat(); renderBadges(); show("vProgress"); }
+function renderProgress() {
+  renderTiles(); renderBadges(); renderProgTabs(); renderPath(); renderGrowth(); renderHeat();
+  $("pSecLeaders").hidden = !leadersKey() || !SHEET();
+  if ($("pSecLeaders").open) renderLeaders($("pLeaders"));
+  show("vProgress");
+}
+$("pTabs").addEventListener("click", e => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  state.settings.tab = t.dataset.tab; save(); renderProgTabs(); renderPath(); renderGrowth(); renderHeat();
+});
+$("pSecLeaders").addEventListener("toggle", () => { if ($("pSecLeaders").open) renderLeaders($("pLeaders")); });
 $("pLesson").onchange = renderGrowth;
 $("pPath").addEventListener("click", e => { const b = e.target.closest(".node"); if (b && !b.disabled) startLesson(b.dataset.id); });
 $("btnProgress").onclick = renderProgress;
-$("btnLeaders").onclick = () => { show("vLeaders"); renderLeaders($("lBox"), null); };
+$("btnLeaders").onclick = () => { show("vLeaders"); renderLeaders($("lBox")); };
 $("lBack").onclick = () => { renderList(); show("vList"); };
 $("rProgress").onclick = renderProgress;
 $("pBack").onclick = () => { renderList(); show("vList"); };
