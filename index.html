@@ -83,7 +83,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .strip span{border-radius:4px;padding:0 1px}
 .strip .done{color:var(--ok)}
 .strip .cur{background:var(--pop);color:var(--pop-ink);box-shadow:0 3px 0 var(--ink)}
-.strip .cur.sp{min-width:.6em;display:inline-block}
+.strip .cur.sp{min-width:0}
 .strip .todo{color:var(--fg);opacity:.75}
 .strip.shake{animation:shake .25s}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
@@ -282,6 +282,30 @@ button{font:inherit;color:inherit;cursor:pointer}
 .nokb b{color:var(--bad)}
 
 /* ---------- мій прогрес ---------- */
+.leaders ol{list-style:none;padding:0;margin:0 0 8px;display:grid;gap:6px;max-width:460px}
+.leaders li{display:flex;justify-content:space-between;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
+.leaders li.me{border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 25%,transparent)}
+.leaders li b{white-space:nowrap}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.tab{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 20px;font-weight:800;color:var(--ink)}
+.tab:hover{border-color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.nextcard{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--surface);border:3px solid var(--pop);border-radius:18px;padding:16px 18px;margin-bottom:10px}
+.nextcard>div{flex:1 1 260px;display:grid;gap:4px}
+.nextcard .nlabel{font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.nextcard b{font-family:var(--display);font-weight:500;font-size:18px;color:var(--ink);line-height:1.3}
+.nextcard .keys{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:.08em}
+.nextcard .meta{font-size:14px;color:var(--muted)}
+.btn.big{font-size:20px;padding:12px 28px}
+.lgroup{border-top:1px solid var(--line)}
+.lgroup summary{display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 4px;font-family:var(--display);font-size:16px;color:var(--ink);list-style:none}
+.lgroup summary::-webkit-details-marker{display:none}
+.lgroup summary::before{content:"▸";color:var(--muted)}
+.lgroup[open] summary::before{content:"▾"}
+.lgroup summary .gname{flex:1}
+.lgroup .gcount{font-family:var(--body);font-size:14px;color:var(--muted);font-weight:700;white-space:nowrap}
+.lgroup .lessons{padding-bottom:14px}
+.lesson.current{border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 30%,transparent)}
 .listbar{display:flex;justify-content:flex-end;margin:-6px 0 6px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:8px 0 6px}
 .tile{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:2px}
@@ -433,6 +457,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vProgress" hidden>
     <div class="bar"><h2>Мій прогрес</h2><button class="btn small" id="pBack">← До уроків</button></div>
     <div class="tiles" id="pTiles"></div>
+    <h3 class="psec" id="pLeadersSec" hidden>Лідери тижня в моїй групі</h3>
+    <div class="leaders" id="pLeaders" hidden></div>
     <h3 class="psec">Мій шлях</h3>
     <div id="pPath"></div>
     <h3 class="psec">Як я росту</h3>
@@ -548,10 +574,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051820"></script>
-<script src="progress.js?v=202611051820" defer></script>
-<script src="words.js?v=202611051820"></script>
-<script src="lessons.js?v=202611051820"></script>
+<script src="config.js?v=202611051829"></script>
+<script src="progress.js?v=202611051829" defer></script>
+<script src="words.js?v=202611051829"></script>
+<script src="lessons.js?v=202611051829"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -697,27 +723,58 @@ function weakLesson(lay){
   return {id:`weak-${lay}`,layout:lay,group:"Тренування для тебе",title:`Мої слабкі клавіші: ${WEAK_NAME[lay]} (${names.join(" ")})`,keys:names.join(" "),newKeys:plan.keys,lines,
     intro:`Клік підібрав слова для клавіш <b>${names.join(", ")}</b>: ${plan.mode==="err"?"на них у тебе найбільше помилок":"їх ти шукаєш найдовше"}. Друкуй спокійно й точно, швидкість прийде сама!`};
 }
-function weakCards(){
-  return `<div class="group">Тренування для тебе</div><div class="lessons">${["ua","en"].map(lay=>{
-    const plan=weakPlan(lay), t=`Мої слабкі клавіші: ${WEAK_NAME[lay]}`;
-    if(!plan.keys.length) return `<button class="lesson locked" disabled><span class="t">${t}</span><span class="meta">${plan.enough?"Слабких клавіш поки немає. Молодець!":"Пройди кілька уроків, і Клік знайде, що потренувати."}</span></button>`;
-    return `<button class="lesson" data-id="weak-${lay}"><span class="t">🎯 ${t}</span><span class="keys">${plan.keys.join(" ").toUpperCase()}</span><span class="meta">${plan.mode==="err"?"Тут найбільше помилок":"Ці клавіші шукаєш найдовше"}. Щоразу нові слова.</span></button>`;
-  }).join("")}</div>`;
+function weakCard(lay){
+  const plan=weakPlan(lay), t=`Мої слабкі клавіші: ${WEAK_NAME[lay]}`;
+  if(!plan.keys.length) return `<button class="lesson locked" disabled><span class="t">${t}</span><span class="meta">${plan.enough?"Слабких клавіш поки немає. Молодець!":"Пройди кілька уроків, і Клік знайде, що потренувати."}</span></button>`;
+  return `<button class="lesson" data-id="weak-${lay}"><span class="t">🎯 ${t}</span><span class="keys">${plan.keys.join(" ").toUpperCase()}</span><span class="meta">${plan.mode==="err"?"Тут найбільше помилок":"Ці клавіші шукаєш найдовше"}. Щоразу нові слова.</span></button>`;
+}
+/* Список уроків: вкладки доріжок, картка «наступний урок» і згорнуті розділи — щоб учень одразу бачив, що робити далі */
+const TABS=[{id:"ua",name:"Українська",has:l=>l.layout==="ua"&&!l.track},{id:"en",name:"English",has:l=>l.layout==="en"&&!l.track},{id:"code",name:"Код",has:l=>!!l.track}];
+const PASS=Math.max(NEED,1); // скільки зірочок означає «урок пройдено»
+const starsOf=l=>state.lessons[l.id]?.stars||0;
+const lastTried=has=>{const H=state.history||[]; for(let i=H.length-1;i>=0;i--){const l=LESSONS.find(x=>x.id===H[i].id); if(l&&has(l)) return l;} return null;};
+function currentTab(){
+  if(TABS.some(t=>t.id===state.settings.tab)) return state.settings.tab;
+  const l=lastTried(()=>true); return l?TABS.find(t=>t.has(l)).id:"ua";
+}
+// Наступний урок вкладки: перший непройдений у доріжці, якою учень займався востаннє.
+function nextLesson(tab){
+  const ls=LESSONS.filter(tab.has), chain=chainOf(lastTried(tab.has)||ls[0]);
+  return chain.find(l=>isOpen(l)&&starsOf(l)<PASS)||ls.find(l=>isOpen(l)&&starsOf(l)<PASS)||null;
+}
+const shortGroup=g=>{const t=g.replace(/^(Українська|Англійська) розкладка:?\s*/,"")||"основна позиція"; return t.charAt(0).toUpperCase()+t.slice(1);};
+function lessonCard(l,next){
+  const p=state.lessons[l.id];
+  if(!isOpen(l)) return `<button class="lesson locked" data-id="${l.id}" disabled><span class="t">🔒 ${l.title}</span><span class="keys">${l.keys}</span>
+    <span class="meta">Спершу пройди «${prevOf(l).title}» щонайменше на ${NEED} ${NEED===1?"зірочку":"зірочки"}</span></button>`;
+  return `<button class="lesson${l===next?" current":""}" data-id="${l.id}"><span class="t">${l.title}</span><span class="keys">${l.keys}</span>
+    <span class="stars">${starsHtml(p?.stars||0)}</span><span class="meta">${p?`Найкраще: ${p.acc}% · ${p.cpm} зн/хв`:"Ще не пройдено"}</span></button>`;
 }
 function renderList(){
-  const done=LESSONS.filter(l=>(state.lessons[l.id]?.stars||0)>=3).length;
-  $("listBubble").innerHTML=done===0?`Обери урок і почни з першого. Пальчики — на основну позицію!`:
+  const done=LESSONS.filter(l=>starsOf(l)>=3).length;
+  $("listBubble").innerHTML=done===0?`Натисни велику кнопку нижче — і вперед! Пальчики — на основну позицію!`:
     done===LESSONS.length?`Ого, усі уроки на 3 зірочки! <b>Клік тобою пишається!</b> 🏆`:
     `Ти вже пройшов на 3 зірочки <b>${done} з ${LESSONS.length}</b> уроків. Так тримати!`;
-  const groups={}; LESSONS.forEach(l=>(groups[l.group]=groups[l.group]||[]).push(l));
-  $("lessonGroups").innerHTML=weakCards()+Object.entries(groups).map(([g,ls])=>`<div class="group">${g}</div><div class="lessons">${
-    ls.map(l=>{const p=state.lessons[l.id];
-      if(!isOpen(l)) return `<button class="lesson locked" data-id="${l.id}" disabled><span class="t">🔒 ${l.title}</span><span class="keys">${l.keys}</span>
-        <span class="meta">Спершу пройди «${prevOf(l).title}» щонайменше на ${NEED} ${NEED===1?"зірочку":"зірочки"}</span></button>`;
-      return `<button class="lesson" data-id="${l.id}"><span class="t">${l.title}</span><span class="keys">${l.keys}</span>
-      <span class="stars">${starsHtml(p?.stars||0)}</span><span class="meta">${p?`Найкраще: ${p.acc}% · ${p.cpm} зн/хв`:"Ще не пройдено"}</span></button>`}).join("")}</div>`).join("");
+  const tab=TABS.find(t=>t.id===currentTab()), ls=LESSONS.filter(tab.has), next=nextLesson(tab);
+  const better=next?null:ls.find(l=>starsOf(l)<3); // усе пройдено — пропонуємо покращити результат
+  const pick=next||better, p=pick&&state.lessons[pick.id];
+  const card=pick?`<div class="nextcard"><div><span class="nlabel">${next?"Твій наступний урок":"Усі уроки тут пройдено! Можна покращити"}</span><b>${pick.title}</b><span class="keys">${pick.keys}</span>
+      <span class="meta">${!p?"Ще не пройдено":next&&NEED?`Найкраще: ${p.acc}%. Щоб іти далі, потрібно ${NEED} ${NEED===1?"зірочку":"зірочки"}.`:`Найкраще: ${p.acc}% · ${p.cpm} зн/хв`}</span></div>
+      <button class="btn primary big" data-id="${pick.id}">▶ ${p?"Продовжити":"Почати"}</button></div>`
+    :`<div class="nextcard"><div><span class="nlabel">Усе пройдено</span><b>Тут усі уроки на 3 зірочки. Оце так результат! 🏆</b></div></div>`;
+  const groups={}; ls.forEach(l=>(groups[l.group]=groups[l.group]||[]).push(l));
+  const lay=tab.id==="code"?null:tab.id;
+  $("lessonGroups").innerHTML=`<div class="tabs" role="tablist">${TABS.map(t=>`<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${t===tab}">${t.name}</button>`).join("")}</div>`+card+
+    (lay?`<div class="group">Тренування для тебе</div><div class="lessons">${weakCard(lay)}</div><div class="group">Усі уроки</div>`:`<div class="group">Усі уроки</div>`)+
+    Object.entries(groups).map(([g,gl])=>{
+      const passed=gl.filter(l=>starsOf(l)>=PASS).length, locked=!gl.some(isOpen);
+      return `<details class="lgroup"${gl.includes(pick)?" open":""}><summary><span class="gname">${locked?"🔒 ":passed===gl.length?"✅ ":""}${tab.id==="code"?g:shortGroup(g)}</span><span class="gcount">пройдено ${passed} з ${gl.length}</span></summary>
+        <div class="lessons">${gl.map(l=>lessonCard(l,next)).join("")}</div></details>`;}).join("");
 }
-$("lessonGroups").addEventListener("click",e=>{const b=e.target.closest(".lesson"); if(b&&!b.disabled) startLesson(b.dataset.id);});
+$("lessonGroups").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(t){state.settings.tab=t.dataset.tab; save(); renderList(); return;}
+  const b=e.target.closest("[data-id]"); if(b&&!b.disabled) startLesson(b.dataset.id);
+});
 
 /* ---------- тренування ---------- */
 let L=null, li=0, pos=0, errs=0, typed=0, t0=0, timer=null, lineErr=false, lineEnd=false; // lineEnd: рядок щойно завершено
@@ -868,7 +925,7 @@ function metroApply(){
   ["bounce","lamp"].forEach(m=>box.classList.toggle("mode-"+m,s.metroMode===m));
   $("metroHint").textContent=MODE_HINT[s.metroMode];
   $("strip").classList.toggle("bouncing",s.metroOn&&s.metroMode==="bounce");
-  metroStop(); grid=null;
+  metroStop(); grid=null; fitStrip();
   if(!metroOnNow()) return;
   grid={start:performance.now()};
   if(s.metroMode==="bounce") ballRaf=requestAnimationFrame(ballFrame);
@@ -919,9 +976,25 @@ function buildKb(){
     LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===0&&tab?`<div class="key pinky tabkey${neu.has("⇥")?" new":""}" data-ch="⇥">Tab ⇥</div>`:""}${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===0&&ghe?`<div class="key pinky${neu.has("ґ")?" new":""}" data-ch="ґ">ґ</div>`:""}${r===1&&enter?enterKey:""}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
     `<div class="row"><div class="key space" data-ch=" ">пробіл</div></div>`;
 }
+// Рядок друку одразу має висоту під найдовший рядок уроку: клавіатура під ним не стрибає, коли текст переноситься.
+function fitStrip(){
+  const st=$("strip"); if(!L||$("vTrain").hidden) return;
+  const probe=document.createElement("span"); probe.style.visibility="hidden"; probe.textContent="0"; st.appendChild(probe); // один знак не переноситься
+  const cw=probe.getBoundingClientRect().width; probe.remove();
+  const cs=getComputedStyle(st), padX=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight), padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  const cap=Math.max(5,Math.floor((st.clientWidth-padX)/cw));
+  let rows=1;
+  for(const line of L.lines){
+    let r=1, used=0;
+    for(const tok of line.match(/[^ ]* ?/g)){ if(!tok) continue; if(used&&used+tok.length>cap){r++; used=0;} used+=tok.length; while(used>cap){r++; used-=cap;} }
+    rows=Math.max(rows,r);
+  }
+  st.style.minHeight=(rows*parseFloat(cs.lineHeight)+padY+4)+"px";
+}
+addEventListener("resize",fitStrip);
 function renderLine(){
   const line=L.lines[li];
-  $("strip").innerHTML=[...line].map((ch,i)=>`<span class="${i<pos?"done"+(lineBeat[i]===true?" onbeat":lineBeat[i]===false?" offbeat":""):i===pos?"cur"+(ch===" "?" sp":""):"todo"}">${ch===" "?"&nbsp;":ch}</span>`).join("");
+  $("strip").innerHTML=[...line].map((ch,i)=>`<span class="${i<pos?"done"+(lineBeat[i]===true?" onbeat":lineBeat[i]===false?" offbeat":""):i===pos?"cur"+(ch===" "?" sp":""):"todo"}">${ch===" "?"&nbsp;</span><wbr>":ch+"</span>"}`).join(""); // переносити можна лише після пробілу — рядок не «стрибає» за курсором
   $("nextLine").textContent=L.lines[li+1]?`Далі: ${L.lines[li+1]}`:"Це останній рядок!";
   $("sLine").textContent=li+1;
   const total=L.lines.reduce((a,s)=>a+s.length,0), doneChars=L.lines.slice(0,li).reduce((a,s)=>a+s.length,0)+pos;

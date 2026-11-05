@@ -105,7 +105,7 @@ function norm(v) {
 function groupKey(v) {
   return groupText(v).split(/\D+/).filter(Boolean).map(x => String(Number(x))).join('');
 }
-// Ім'я: слова без цифр і розділових знаків, у будь-якому порядку — «Андрій Боднарчук6 99» = «Боднарчук Андрій».
+// Ім'я: слова без цифр і розділових знаків, у будь-якому порядку — «Іван Петренко6 99» = «Петренко Іван».
 function nameKey(v) {
   return norm(v).replace(/[^a-zа-яіїєґ' ]/g, ' ').split(' ').filter(w => w.length > 1).sort().join(' ');
 }
@@ -124,6 +124,10 @@ function findStudent(group, code) {
 function doGet(e) {
   const p = e.parameter || {};
   if (p.action === 'setup') { setup(); return json({ ok: true }); }
+  if (p.action === 'leaders') {
+    const me = findStudent(p.group, p.code);
+    return json(me ? leadersOf(me) : { ok: false, error: 'notfound' });
+  }
   if (p.action !== 'login') return json({ ok: false, error: 'action' });
   const s = findStudent(p.group, p.code);
   if (!s) return json({ ok: false, error: 'notfound' });
@@ -145,6 +149,49 @@ function historyOf(s) {
     stars: val(r[5]) || 1, acc: val(r[6]) || 0, cpm: val(r[7]) || 0, errs: val(r[8]) || 0, sec: val(r[9]) || 0,
     rhythm: val(r[10]), beat: val(r[13])
   }));
+}
+
+/* ---------- лідери тижня ---------- */
+// «Дзьоба Тарас» → «Тарас Д.»: повних прізвищ іншим учням не показуємо.
+function shortName(name) {
+  const w = String(name).trim().split(/\s+/);
+  return w.length > 1 ? w.slice(1).join(' ') + ' ' + w[0].charAt(0).toUpperCase() + '.' : w[0];
+}
+
+// Рейтинг групи учня: скільки НОВИХ зірочок здобуто з понеділка (за часом таблиці). Вправи «слабкі клавіші» не рахуються.
+function leadersOf(me) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const st = ss.getSheetByName(STUDENTS), sh = ss.getSheetByName(SHEET_NAME);
+  const g = groupKey(me.group), tz = ss.getSpreadsheetTimeZone(), day = d => Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+  const now = new Date(), dow = Number(Utilities.formatDate(now, tz, 'u')) || now.getDay() || 7; // 1 — понеділок
+  const monday = day(new Date(now.getTime() - (dow - 1) * 86400000));
+  const studs = st.getRange(2, 1, st.getLastRow() - 1, 3).getValues()
+    .filter(r => groupKey(r[0]) === g && String(r[1]).trim() && String(r[2]).trim())
+    .map(r => ({ name: String(r[1]).trim(), code: norm(r[2]), nk: nameKey(r[1]), before: {}, week: {} }));
+  if (sh && sh.getLastRow() >= 2) {
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(HEADER.length, sh.getLastColumn())).getValues();
+    rows.forEach(r => {
+      const id = String(r[3]), stars = Number(r[5]) || 0, rc = norm(r[14]);
+      if (!id || id.indexOf('weak-') === 0 || !(r[0] instanceof Date)) return;
+      const s = rc ? studs.find(x => x.code === rc) : (groupKey(r[1]) === g ? studs.find(x => x.nk === nameKey(r[2])) : null);
+      if (!s) return;
+      const bucket = day(r[0]) >= monday ? s.week : s.before;
+      bucket[id] = Math.max(bucket[id] || 0, stars);
+    });
+  }
+  const list = studs.map(s => {
+    let gain = 0, total = 0;
+    Object.keys(s.week).forEach(id => { gain += Math.max(0, s.week[id] - (s.before[id] || 0)); });
+    const ids = {}; Object.keys(s.before).concat(Object.keys(s.week)).forEach(id => { ids[id] = Math.max(s.before[id] || 0, s.week[id] || 0); });
+    Object.keys(ids).forEach(id => { total += ids[id]; });
+    return { name: shortName(s.name), gain: gain, total: total, me: s.code === norm(me.code) };
+  }).sort((a, b) => b.gain - a.gain || b.total - a.total);
+  let place = 0, prev = null;
+  list.forEach(x => { if (x.gain !== prev) { place++; prev = x.gain; } x.place = place; });
+  const mine = list.find(x => x.me) || { gain: 0, place: null };
+  return { ok: true, since: monday, size: studs.length,
+    top: list.filter(x => x.gain > 0).slice(0, 5).map(x => ({ place: x.place, name: x.name, gain: x.gain, me: x.me })),
+    me: { place: mine.gain > 0 ? mine.place : null, gain: mine.gain } };
 }
 
 function stateOf(s) {

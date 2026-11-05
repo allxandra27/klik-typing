@@ -181,8 +181,26 @@ function renderBadges() {
   }).join("");
 }
 
+/* ---------- лідери тижня ---------- */
+const MEDAL = ["🥇", "🥈", "🥉"];
+function renderLeaders() {
+  const box = $("pLeaders"), sec = $("pLeadersSec"), st = state.student;
+  const hide = () => { sec.hidden = box.hidden = true; };
+  if (!SHEET() || !st || !st.code) return hide();
+  sec.hidden = box.hidden = false;
+  box.innerHTML = `<p class="pnote">Завантажую рейтинг…</p>`;
+  fetch(`${SHEET()}?action=leaders&group=${encodeURIComponent(st.cls)}&code=${encodeURIComponent(st.code)}`).then(r => r.json()).then(d => {
+    if (!d.ok) return hide(); // стара версія скрипта таблиці не знає про рейтинг
+    const rows = d.top.map(x => `<li class="${x.me ? "me" : ""}"><span>${MEDAL[x.place - 1] || x.place + "."} ${esc(x.name)}${x.me ? " (це ти!)" : ""}</span><b>+${x.gain} ★</b></li>`).join("");
+    const mine = d.top.some(x => x.me) ? "" : d.me.gain > 0 ? `<p class="pnote">Твоє місце: <b>${d.me.place}</b> (+${d.me.gain} ★ цього тижня).</p>` :
+      `<p class="pnote">У тебе поки немає нових зірочок цього тижня. Пройди урок на більше зірочок, ніж раніше!</p>`;
+    box.innerHTML = (rows ? `<ol>${rows}</ol>` : `<p class="pnote">Цього тижня ще ніхто з групи не здобув нових зірочок. Будь першим!</p>`) + mine +
+      `<p class="pnote">Рахуємо нові зірочки з понеділка: за новий урок або кращий результат у старому. Щопонеділка рейтинг починається заново.</p>`;
+  }).catch(hide);
+}
+
 /* ---------- екран ---------- */
-function renderProgress() { renderTiles(); renderPath(); renderGrowth(); renderHeat(); renderBadges(); show("vProgress"); }
+function renderProgress() { renderTiles(); renderLeaders(); renderPath(); renderGrowth(); renderHeat(); renderBadges(); show("vProgress"); }
 $("pLesson").onchange = renderGrowth;
 $("pPath").addEventListener("click", e => { const b = e.target.closest(".node"); if (b && !b.disabled) startLesson(b.dataset.id); });
 $("btnProgress").onclick = renderProgress;
