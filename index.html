@@ -482,7 +482,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     </div>
     <div id="gAfter" hidden>
       <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
-      <h2>Гру завершено!</h2>
+      <h2 id="gAfterTitle">Гру завершено!</h2>
       <p id="gResult"></p>
       <p class="gamerule" id="gNext"></p>
       <div class="actions" style="margin-top:14px"><button class="btn primary" id="gDone">Зрозуміло</button></div>
@@ -502,10 +502,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611050941"></script>
-<script src="progress.js?v=202611050941" defer></script>
-<script src="words.js?v=202611050941"></script>
-<script src="lessons.js?v=202611050941"></script>
+<script src="config.js?v=202611050946"></script>
+<script src="progress.js?v=202611050946" defer></script>
+<script src="words.js?v=202611050946"></script>
+<script src="lessons.js?v=202611050946"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -1098,10 +1098,10 @@ function nextInviteText(){
   if(left<need) return "Ти зібрав майже всі Золоті курсори, які сховав Клік. Оце так результат!";
   return `Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${GOLD.accuracy}% і ритмічністю від ${GOLD.rhythm}%. Уроки, за які вже було нараховано, повторно не рахуються.`;
 }
-function endGame(text){
+function endGame(text,title="Гру завершено!"){
   clearTimeout(gameTimer); gameTimer=null; maze=null;
-  $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
-  $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
+  $("gAfterTitle").textContent=title; $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
+  $("gInvite").hidden=true; $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
 }
 function gameTick(){
   const left=Math.max(0,Math.ceil((gameEnd-Date.now())/1000));
@@ -1110,7 +1110,7 @@ function gameTick(){
   gameTimer=setTimeout(gameTick,250);
 }
 function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; $("gameBox").hidden=true;}
-$("gNo").onclick=closeGame;
+$("gNo").onclick=()=>endGame("Ти відмовився від гри. Це запрошення вже не повернеться.","Запрошення закрито");
 $("gClose").onclick=()=>endGame(`Ти завершив гру раніше. Пройдено лабіринтів: ${mazeLevel} з ${MAZE_LEVELS.length}.`);
 $("gDone").onclick=closeGame;
 $("gPlay").onclick=()=>{
