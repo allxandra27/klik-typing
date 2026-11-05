@@ -886,5 +886,110 @@ window.LESSONS = [
       "Best wishes,↵",
       "Max↵"
     ]
+  },
+  {
+    id: "web1", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "HTML 1. Кутові дужки й теги", keys: "< > /", newKeys: [",", ".", "/"],
+    intro: "Теги пишемо в кутових дужках. <b>&lt;</b> — це <b>Shift + кома</b>, <b>&gt;</b> — це <b>Shift + крапка</b>. Закривний тег має скісну риску <b>/</b>: її натискаємо правим мізинцем без Shift.",
+    lines: [
+      "<p> <p> <p> </p> </p> </p>",
+      "<h1> </h1> <h2> </h2> <h3> </h3>",
+      "<b> </b> <i> </i> <u> </u>",
+      "<ul> <li> </li> </ul>",
+      "<p>Hello</p>",
+      "<h1>My page</h1>",
+      "<b>bold</b> and <i>italic</i>",
+      "<li>one</li> <li>two</li>",
+      "<title>My site</title>",
+      "<p>I love <b>HTML</b>!</p>"
+    ]
+  },
+  {
+    id: "web2", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "HTML 2. Атрибути: знак = і лапки", keys: '= "', newKeys: ["=", "'"],
+    intro: "Атрибут тега пишемо так: назва, знак <b>=</b> і значення в лапках. Знак <b>=</b> — праворуч від дефіса, правим мізинцем. Лапки — це <b>Shift + апостроф</b> (клавіша праворуч від ;).",
+    lines: [
+      'a="b" a="b" id="x" id="x"',
+      'class="box" class="title"',
+      '<a href="page.html">link</a>',
+      '<img src="cat.png" alt="cat">',
+      '<p class="text">Hello</p>',
+      '<div id="main"></div>',
+      '<h1 class="title">News</h1>',
+      '<input type="text" name="city">',
+      '<a href="https://kompschool.com">site</a>',
+      '<img src="logo.png" alt="logo" width="100">'
+    ]
+  },
+  {
+    id: "web3", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "HTML 3. Каркас сторінки", keys: "сторінка + Enter", newKeys: ["↵"],
+    intro: "Кожна веб-сторінка має однаковий каркас: <b>html</b>, у ньому <b>head</b> і <b>body</b>. Кожен рядок коду завершуємо клавішею <b>Enter</b> (знак ↵).",
+    lines: [
+      "<!DOCTYPE html>↵",
+      '<html lang="uk">↵',
+      "<head>↵",
+      '<meta charset="utf-8">↵',
+      "<title>My page</title>↵",
+      "</head>↵",
+      "<body>↵",
+      "<h1>Hello, world!</h1>↵",
+      "<p>This is my first page.</p>↵",
+      "</body>↵",
+      "</html>↵"
+    ]
+  },
+  {
+    id: "web4", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "CSS 1. Властивості: двокрапка і крапка з комою", keys: ": ;", newKeys: [";"],
+    intro: "Властивість CSS пишемо так: назва, <b>двокрапка</b>, значення і <b>крапка з комою</b>. Крапка з комою — під правим мізинцем, а двокрапка — та сама клавіша із Shift.",
+    lines: [
+      "color: red;",
+      "color: blue; color: green;",
+      "font-size: 20px;",
+      "text-align: center;",
+      "font-weight: bold;",
+      "background: yellow;",
+      "width: 200px; height: 100px;",
+      "margin: 10px; padding: 20px;",
+      "border: 2px solid black;",
+      "border-radius: 8px;"
+    ]
+  },
+  {
+    id: "web5", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "CSS 2. Фігурні дужки й селектори", keys: "{ } . #", newKeys: ["[", "]", "3"],
+    intro: "Властивості беремо у фігурні дужки: <b>{</b> і <b>}</b> — це <b>Shift</b> і дві клавіші праворуч від P. Перед дужками стоїть селектор: тег, <b>.клас</b> або <b>#ідентифікатор</b> (решітка — Shift + 3).",
+    lines: [
+      "{ } { } { } { }",
+      "p { color: red; }",
+      "h1 { font-size: 32px; }",
+      "body { background: white; }",
+      ".box { width: 200px; }",
+      ".title { text-align: center; }",
+      "#main { margin: 0 auto; }",
+      "a { color: blue; }",
+      "img { border-radius: 10px; }",
+      ".btn { padding: 10px 20px; }",
+      "h1, h2 { color: navy; }"
+    ]
+  },
+  {
+    id: "web6", track: "web", group: "HTML і CSS: друк коду", layout: "en", exact: true,
+    title: "CSS 3. Кольори, відсотки й готовий стиль", keys: "# % ( )", newKeys: ["3", "5", "9", "0"],
+    intro: "Колір записують кодом із решіткою (<b>#ff0000</b>) або через <b>rgb( )</b>. Відсоток — це <b>Shift + 5</b>, дужки — <b>Shift + 9</b> і <b>Shift + 0</b>. Наприкінці надрукуй цілий стиль картки!",
+    lines: [
+      "color: #ff0000;",
+      "background: #1f3c88;",
+      "width: 50%; height: 100%;",
+      "color: rgb(255, 0, 0);",
+      ".card {↵",
+      "width: 80%;↵",
+      "padding: 16px;↵",
+      "background: #ffffff;↵",
+      "border: 1px solid #cccccc;↵",
+      "border-radius: 12px;↵",
+      "}↵"
+    ]
   }
 ];

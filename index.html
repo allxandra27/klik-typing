@@ -520,10 +520,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051220"></script>
-<script src="progress.js?v=202611051220" defer></script>
-<script src="words.js?v=202611051220"></script>
-<script src="lessons.js?v=202611051220"></script>
+<script src="config.js?v=202611051236"></script>
+<script src="progress.js?v=202611051236" defer></script>
+<script src="words.js?v=202611051236"></script>
+<script src="lessons.js?v=202611051236"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -532,12 +532,12 @@ const LAYOUT={
   en:[["q","w","e","r","t","y","u","i","o","p","[","]"],["a","s","d","f","g","h","j","k","l",";","'"],["z","x","c","v","b","n","m",",",".","/"]]
 };
 // Ряд цифр (показуємо лише в уроках, де є цифри): ті самі пальці, що й у стовпчиках під ним.
-const NUMROW=["1","2","3","4","5","6","7","8","9","0","-"];
+const NUMROW=["1","2","3","4","5","6","7","8","9","0","-","="];
 const FCOL=["pinky","ring","middle","index","index","index","index","middle","ring","pinky","pinky","pinky"];
 const FNAME={pinky:"мізинцем",ring:"безіменним",middle:"середнім",index:"вказівним"};
 const HOME={ua:["а","о"],en:["f","j"]};
 // Знаки, які друкуються з Shift: знак → клавіша під ним (розкладки Windows).
-const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";"}};
+const SHIFTED={ua:{",":".","!":"1","?":"7",":":"6"},en:{"!":"1","?":"/","@":"2","_":"-",":":";","<":",",">":".",'"':"'","{":"[","}":"]","#":"3","%":"5","(":"9",")":"0"}};
 const baseKey=(layout,ch)=>SHIFTED[layout][ch]||ch.toLowerCase();
 const needsShift=(layout,ch)=>ch!==ch.toLowerCase()||ch in SHIFTED[layout];
 function keyInfo(layout,ch){
@@ -621,8 +621,9 @@ $("logout").onclick=()=>{typedMs=0; delete state.settings.eggs; delete state.set
 const starsHtml=n=>[1,2,3].map(i=>i<=n?"★":`<span class="off">★</span>`).join("");
 // Урок відкривається, коли попередній урок тієї ж розкладки пройдено щонайменше на unlockStars зірочок.
 const NEED=Number((window.KLIK_CONFIG||{}).unlockStars)||0;
-const prevOf=l=>{const chain=LESSONS.filter(x=>x.layout===l.layout), i=chain.indexOf(l); return i>0?chain[i-1]:null;};
-const nextOf=l=>{const chain=LESSONS.filter(x=>x.layout===l.layout), i=chain.indexOf(l); return i<0?null:chain[i+1]||null;};
+const chainOf=l=>LESSONS.filter(x=>(x.track||x.layout)===(l.track||l.layout));
+const prevOf=l=>{const chain=chainOf(l), i=chain.indexOf(l); return i>0?chain[i-1]:null;};
+const nextOf=l=>{const chain=chainOf(l), i=chain.indexOf(l); return i<0?null:chain[i+1]||null;};
 const isOpen=l=>{const p=prevOf(l); return !NEED||!p||(state.lessons[p.id]?.stars||0)>=NEED;};
 /* ---------- «Мої слабкі клавіші»: вправа зі слів під конкретного учня ---------- */
 const WEAK_NAME={ua:"українська",en:"англійська"};
@@ -874,7 +875,9 @@ function renderLine(){
   if(needsShift(L.layout,ch)){
     // Shift натискаємо мізинцем протилежної руки
     const right=info.c<=4, s=document.querySelector(`.key[data-ch="${right?"shiftR":"shiftL"}"]`); if(s)s.classList.add("target");
-    const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»",":":"двокрапка «:»","@":"равлик «@»","_":"підкреслення «_»"}[ch];
+    const base=baseKey(L.layout,ch), sign={"!":"знак оклику «!»","?":"знак питання «?»",":":"двокрапка «:»","@":"равлик «@»","_":"підкреслення «_»",
+      "<":"кутова дужка «<»",">":"кутова дужка «>»",'"':'знак лапок «"»',
+      "{":"фігурна дужка «{»","}":"фігурна дужка «}»","#":"решітка «#»","%":"відсоток «%»","(":"дужка «(»",")":"дужка «)»"}[ch];
     $("fingerHint").textContent=sign
       ?`${right?"Правим":"Лівим"} мізинцем затисни Shift і натисни «${base}» ${info.hand} ${FNAME[info.finger]} — вийде ${sign}`
       :`${right?"Правим":"Лівим"} мізинцем затисни Shift, а ${ch===","?"кому":`«${ch}»`} натисни ${info.hand} ${FNAME[info.finger]}`;
@@ -919,7 +922,7 @@ document.addEventListener("keydown",e=>{
     $("warn").textContent="Тут потрібна розкладка «Українська (розширена)»: у ній апостроф ліворуч від цифри 1. Запитай учителя."; $("warn").hidden=false; return;
   }
   // неправильна мова
-  if((isCyr(want)&&isLat(got))||(isLat(want)&&isCyr(got))||/[ыэъё]/.test(got)){
+  if((L.layout==="ua"&&isLat(got))||(L.layout==="en"&&isCyr(got))||/[ыэъё]/.test(got)){
     $("warn").textContent=L.layout==="ua"?"Увімкнена не та мова! Перемкни на УКР: Alt + Shift або Win + Пробіл":"Увімкнена не та мова! Перемкни на ENG: Alt + Shift або Win + Пробіл";
     $("warn").hidden=false; return;
   }

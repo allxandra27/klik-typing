@@ -51,7 +51,7 @@ function renderPath() {
     ls.map(l => {
       const st = state.lessons[l.id]?.stars || 0, open = isOpen(l), ok = st >= 2;
       let cls = ok ? "done" : open ? "open" : "locked";
-      if (!ok && open && !currentMarked[l.layout]) { cls += " current"; currentMarked[l.layout] = true; }
+      if (!ok && open && !currentMarked[l.track || l.layout]) { cls += " current"; currentMarked[l.track || l.layout] = true; }
       const num = (l.title.match(/\d+/) || [""])[0];
       const stars = [1, 2, 3].map(i => i <= st ? "★" : `<span class="off">★</span>`).join("");
       return `<button class="node ${cls}" data-id="${l.id}" ${open ? "" : "disabled"} title="${esc(l.title)}">
@@ -170,8 +170,8 @@ const BADGES = [
   ["⚡", "Швидкі пальці", "Надрукуй 100 знаків за хвилину з точністю від 90%", H => H.some(a => a.cpm >= 100 && a.acc >= 90)],
   ["💪", "Наполегливість", "Зроби 20 спроб", H => H.length >= 20],
   ["🕵️", "Шукач секретів", "Знайди 3 секрети, які сховав Клік", () => (state.settings.eggs || []).length >= 3],
-  ["🇺🇦", "Українська розкладка", "Пройди всі українські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "ua").every(passed)],
-  ["🇬🇧", "English", "Пройди всі англійські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "en").every(passed)]
+  ["🇺🇦", "Українська розкладка", "Пройди всі українські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "ua" && !l.track).every(passed)],
+  ["🇬🇧", "English", "Пройди всі англійські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "en" && !l.track).every(passed)]
 ];
 function renderBadges() {
   const H = state.history;
