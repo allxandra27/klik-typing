@@ -103,8 +103,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .key.new{border-color:var(--ink);border-style:dashed}
 .key.target{border-color:var(--ink);border-style:solid;box-shadow:0 0 0 4px var(--pop);transform:translateY(-2px)}
 .row.r3{padding-left:0}
+.key.tabkey{width:calc(var(--kw)*1.5 - var(--g));font-size:clamp(10px,calc(var(--kw)*.26),14px);text-transform:none;white-space:nowrap}
 .key.enterkey{width:calc(var(--kw)*1.6);font-size:clamp(10px,calc(var(--kw)*.26),14px);text-transform:none;white-space:nowrap}
 .kb.num .row.r1{padding-left:calc(var(--kw)*var(--sh))} .kb.num .row.r2{padding-left:calc(var(--kw)*(var(--sh) + .35))} .kb.num .row.r3{padding-left:calc(var(--kw)*var(--sh))}
+.kb.hastab .row.r0{padding-left:calc(var(--kw) + var(--g))} .kb.hastab .row.r1{padding-left:0}
 .key.shift{background:var(--f-pinky);text-transform:none;font-size:clamp(14px,calc(var(--kw)*.5),22px)}
 .key.shift.sl{width:calc(var(--kw)*.75)} .key.shift.sr{width:calc(var(--kw)*.9)}
 .space{width:calc(var(--kw)*6);background:var(--f-thumb);margin-left:calc(var(--kw)*3);text-transform:none;font-size:14px;color:var(--muted)}
@@ -520,10 +522,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051243"></script>
-<script src="progress.js?v=202611051243" defer></script>
-<script src="words.js?v=202611051243"></script>
-<script src="lessons.js?v=202611051243"></script>
+<script src="config.js?v=202611051300"></script>
+<script src="progress.js?v=202611051300" defer></script>
+<script src="words.js?v=202611051300"></script>
+<script src="lessons.js?v=202611051300"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -846,17 +848,18 @@ function buildKb(){
   const usesShift=[...text].some(c=>needsShift(L.layout,c));
   const neu=new Set(L.newKeys||[]);
   const apos=L.layout==="ua"&&text.includes("'"), ghe=L.layout==="ua"&&/ґ/i.test(text);
-  const num=apos||[...text].some(c=>NUMROW.includes(baseKey(L.layout,c)));
+  const tab=L.lines.some(l=>l.startsWith(" ")); // рядки коду з відступом
+  const num=apos||tab||[...text].some(c=>NUMROW.includes(baseKey(L.layout,c)));
   const enter=text.includes("↵"), enterKey=`<div class="key pinky enterkey${neu.has("↵")?" new":""}" data-ch="↵">Enter ↵</div>`;
   // Зсув літерних рядів і ширина клавіші: найдовший ряд має вміститися на екрані.
-  const shift=apos?1.5:num?.5:0;
-  $("kb").classList.toggle("num",num); $("kb").style.setProperty("--sh",shift);
+  const shift=apos||tab?1.5:num?.5:0;
+  $("kb").classList.toggle("num",num); $("kb").classList.toggle("hastab",tab); $("kb").style.setProperty("--sh",shift);
   $("kb").style.setProperty("--rows",Math.max(12,12+shift+(ghe?1:0),11.35+shift+(enter?1.6:0),12.65+shift)+(num||enter||ghe?.1:0));
   const key=(ch,c)=>{const cls=["key",FCOL[c]]; if(HOME[L.layout].includes(ch))cls.push("home"); if(!allowed.has(ch))cls.push("dim"); if(neu.has(ch))cls.push("new");
     return `<div class="${cls.join(" ")}" data-ch="${ch}">${ch}</div>`;};
   const sh=(id,cls)=>`<div class="key shift ${cls}${usesShift?"":" dim"}${neu.has(id)?" new":""}" data-ch="${id}" title="Shift">⇧</div>`;
   $("kb").innerHTML=(num?`<div class="row r0">${apos?`<div class="key pinky${allowed.has("'")?"":" dim"}${neu.has("'")?" new":""}" data-ch="'">'</div>`:""}${NUMROW.map(key).join("")}</div>`:"")+
-    LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===0&&ghe?`<div class="key pinky${neu.has("ґ")?" new":""}" data-ch="ґ">ґ</div>`:""}${r===1&&enter?enterKey:""}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
+    LAYOUT[L.layout].map((row,r)=>`<div class="row r${r+1}">${r===0&&tab?`<div class="key pinky tabkey${neu.has("⇥")?" new":""}" data-ch="⇥">Tab ⇥</div>`:""}${r===2?sh("shiftL","sl"):""}${row.map(key).join("")}${r===0&&ghe?`<div class="key pinky${neu.has("ґ")?" new":""}" data-ch="ґ">ґ</div>`:""}${r===1&&enter?enterKey:""}${r===2?sh("shiftR","sr"):""}</div>`).join("")+
     `<div class="row"><div class="key space" data-ch=" ">пробіл</div></div>`;
 }
 function renderLine(){
@@ -871,7 +874,8 @@ function renderLine(){
   const k=document.querySelector(`.key[data-ch="${CSS.escape(baseKey(L.layout,ch))}"]`); if(k)k.classList.add("target");
   if(ch===" ") {
     const left=line.match(/^ */)[0].length-pos; // відступ на початку рядка коду
-    $("fingerHint").textContent=left>0?`Відступ: натисни пробіл ще ${left} ${left===1?"раз":"рази"}`:"Пробіл — великим пальцем"; return;
+    if(left>0){const t=document.querySelector('.key[data-ch="⇥"]'); if(t)t.classList.add("target");}
+    $("fingerHint").textContent=left>0?`Відступ: натисни Tab лівим мізинцем (або пробіл ще ${left} ${left===1?"раз":"рази"})`:"Пробіл — великим пальцем"; return;
   }
   if(ch==="↵") {$("fingerHint").textContent="Натисни Enter правим мізинцем"; return;}
   const info=keyInfo(L.layout,ch); if(!info){$("fingerHint").textContent=""; return;}
@@ -912,6 +916,18 @@ document.addEventListener("keydown",e=>{
   if(counting){if(e.key.length===1||e.key==="Escape") e.preventDefault(); return;}
   if(e.key==="Escape"){e.preventDefault(); paused?resume():pause(); return;}
   if(paused){if(e.key==="Enter"){e.preventDefault(); resume();} else if(e.key.length===1) e.preventDefault(); return;}
+  if(e.key==="Tab"){
+    // Tab ставить відступ до наступної позиції, кратної 4; деінде в рядку він нічого не робить
+    e.preventDefault();
+    const lead=L.lines[li].match(/^ */)[0].length;
+    if(pos>=lead) return;
+    const n=Math.min(lead-pos,4-pos%4), now=performance.now();
+    $("warn").hidden=true;
+    if(!t0){t0=Date.now(); timer=setInterval(updStats,1000);}
+    typed+=n; hits.push({t:now,ch:" "}); lineEnd=false;
+    if(metroOnNow()){const ok=onBeat(now); if(ok!==null){beatTotal++; if(ok) beatHits++;} for(let i=pos;i<pos+n;i++) lineBeat[i]=ok;}
+    pos+=n; renderLine(); updStats(); return;
+  }
   const want=L.lines[li][pos], pressed=e.key==="Enter"&&want==="↵"?"↵":/^[’ʼ]$/.test(e.key)?"'":e.key;
   if(pressed.length!==1){if(e.key==="Enter") e.preventDefault(); return;}
   e.preventDefault();
