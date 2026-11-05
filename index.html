@@ -282,8 +282,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .nokb b{color:var(--bad)}
 
 /* ---------- мій прогрес ---------- */
-.leaders ol{list-style:none;padding:0;margin:0 0 8px;display:grid;gap:6px;max-width:460px}
-.leaders li{display:flex;justify-content:space-between;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
+.leaders ol{list-style:none;padding:0;margin:0 0 8px;columns:2;column-gap:12px;max-width:820px}
+@media (max-width:640px){.leaders ol{columns:1}}
+.leaders li b.zero{color:var(--muted);font-weight:700}
+.leaders li{break-inside:avoid;margin-bottom:6px;display:flex;justify-content:space-between;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
 .leaders li.me{border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 25%,transparent)}
 .leaders li b{white-space:nowrap}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
@@ -306,7 +308,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lgroup .gcount{font-family:var(--body);font-size:14px;color:var(--muted);font-weight:700;white-space:nowrap}
 .lgroup .lessons{padding-bottom:14px}
 .lesson.current{border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 30%,transparent)}
-.listbar{display:flex;justify-content:flex-end;margin:-6px 0 6px}
+.listbar{display:flex;justify-content:flex-end;margin:-6px 0 6px;gap:8px;flex-wrap:wrap}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:8px 0 6px}
 .tile{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:2px}
 .tile b{font-family:var(--display);font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -397,7 +399,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vList" hidden>
     <div class="say"><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <div class="bubble" id="listBubble"></div></div>
-    <div class="listbar"><button class="btn primary" id="btnProgress">📈 Мій прогрес</button></div>
+    <div class="listbar"><button class="btn" id="btnLeaders">🏆 Лідери</button><button class="btn primary" id="btnProgress">📈 Мій прогрес</button></div>
     <div class="nokb" id="noKbList" hidden><svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <p><b>Для тренування потрібна справжня клавіатура.</b> Відкрий тренажер на комп'ютері або ноутбуці чи підключи клавіатуру до планшета або телефона. Якщо клавіатура вже підключена — просто почни друкувати.</p></div>
     <div id="lessonGroups"></div>
@@ -454,6 +456,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   </section>
 
   <!-- мій прогрес -->
+  <section id="vLeaders" hidden>
+    <div class="bar"><h2>Лідери тижня в моїй групі</h2><button class="btn small" id="lBack">← До уроків</button></div>
+    <div class="leaders" id="lBox"></div>
+  </section>
+
   <section id="vProgress" hidden>
     <div class="bar"><h2>Мій прогрес</h2><button class="btn small" id="pBack">← До уроків</button></div>
     <div class="tiles" id="pTiles"></div>
@@ -574,10 +581,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611051829"></script>
-<script src="progress.js?v=202611051829" defer></script>
-<script src="words.js?v=202611051829"></script>
-<script src="lessons.js?v=202611051829"></script>
+<script src="config.js?v=202611052115"></script>
+<script src="progress.js?v=202611052115" defer></script>
+<script src="words.js?v=202611052115"></script>
+<script src="lessons.js?v=202611052115"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -613,7 +620,7 @@ function save(){try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
 
 /* ---------- екрани ---------- */
 const $=id=>document.getElementById(id);
-const views=["vLogin","vList","vTrain","vResult","vProgress"];
+const views=["vLogin","vList","vTrain","vResult","vProgress","vLeaders"];
 function show(v){views.forEach(x=>$(x).hidden=x!==v); $("who").hidden=!state.student; if(state.student) $("whoName").textContent=`${state.student.name}, ${state.student.cls}`; window.scrollTo(0,0);}
 
 /* ---------- вхід за кодом: прогрес зберігається в Google Таблиці ---------- */

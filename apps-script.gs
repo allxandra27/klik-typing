@@ -152,13 +152,8 @@ function historyOf(s) {
 }
 
 /* ---------- лідери тижня ---------- */
-// «Дзьоба Тарас» → «Тарас Д.»: повних прізвищ іншим учням не показуємо.
-function shortName(name) {
-  const w = String(name).trim().split(/\s+/);
-  return w.length > 1 ? w.slice(1).join(' ') + ' ' + w[0].charAt(0).toUpperCase() + '.' : w[0];
-}
-
-// Рейтинг групи учня: скільки НОВИХ зірочок здобуто з понеділка (за часом таблиці). Вправи «слабкі клавіші» не рахуються.
+// Рейтинг групи учня: усі учні групи за спаданням НОВИХ зірочок, здобутих з понеділка (за часом таблиці).
+// Рейтинг бачать лише учні цієї самої групи (потрібен код). Вправи «слабкі клавіші» не рахуються.
 function leadersOf(me) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const st = ss.getSheetByName(STUDENTS), sh = ss.getSheetByName(SHEET_NAME);
@@ -184,14 +179,14 @@ function leadersOf(me) {
     Object.keys(s.week).forEach(id => { gain += Math.max(0, s.week[id] - (s.before[id] || 0)); });
     const ids = {}; Object.keys(s.before).concat(Object.keys(s.week)).forEach(id => { ids[id] = Math.max(s.before[id] || 0, s.week[id] || 0); });
     Object.keys(ids).forEach(id => { total += ids[id]; });
-    return { name: shortName(s.name), gain: gain, total: total, me: s.code === norm(me.code) };
+    return { name: s.name, gain: gain, total: total, me: s.code === norm(me.code) };
   }).sort((a, b) => b.gain - a.gain || b.total - a.total);
   let place = 0, prev = null;
   list.forEach(x => { if (x.gain !== prev) { place++; prev = x.gain; } x.place = place; });
   const mine = list.find(x => x.me) || { gain: 0, place: null };
   return { ok: true, since: monday, size: studs.length,
-    top: list.filter(x => x.gain > 0).slice(0, 5).map(x => ({ place: x.place, name: x.name, gain: x.gain, me: x.me })),
-    me: { place: mine.gain > 0 ? mine.place : null, gain: mine.gain } };
+    top: list.map(x => ({ place: x.place, name: x.name, gain: x.gain, total: x.total, me: x.me })),
+    me: { place: mine.place, gain: mine.gain } };
 }
 
 function stateOf(s) {
