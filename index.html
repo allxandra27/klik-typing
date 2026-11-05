@@ -363,12 +363,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .kb.heat .key.nodata{border-style:dashed;color:var(--muted);opacity:.6}
 .heatlegend{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:8px}
 .heatlegend i{width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--heat) 12%,var(--surface)),var(--heat))}
-.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.badge{display:grid;gap:2px;background:var(--surface);border:2px dashed var(--line);border-radius:14px;padding:12px;opacity:.6}
-.badge .bic{font-size:28px;line-height:1}
-.badge b{color:var(--fg);font-size:15px}
-.badge span:last-child{font-size:13px;color:var(--muted);line-height:1.3}
-.badge.got{opacity:1;border-style:solid;border-color:var(--pop);box-shadow:0 0 0 3px color-mix(in srgb,var(--pop) 25%,transparent)}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px dashed var(--line);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700;color:var(--muted)}
+.badge .bic{font-size:16px;line-height:1}
+.badge.got{border-style:solid;border-color:var(--pop);color:var(--fg)}
+.badge:hover,.badge[aria-pressed="true"]{border-color:var(--ink)}
+.badgenote{font-size:14px;color:var(--muted);margin:8px 0 0;min-height:1.5em}
+.psec small{font-family:var(--body);font-size:14px;font-weight:700;color:var(--muted);margin-left:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -466,8 +467,9 @@ button{font:inherit;color:inherit;cursor:pointer}
   <section id="vProgress" hidden>
     <div class="bar"><h2>Мій прогрес</h2><button class="btn small" id="pBack">← До уроків</button></div>
     <div class="tiles" id="pTiles"></div>
-    <h3 class="psec">Досягнення</h3>
+    <h3 class="psec">Досягнення <small id="pBadgeCount"></small></h3>
     <div class="badges" id="pBadges"></div>
+    <p class="badgenote" id="pBadgeNote" aria-live="polite"></p>
     <div class="tabs ptabs" id="pTabs" role="tablist"></div>
     <details class="lgroup" id="pSecPath" open>
       <summary><span class="gname">Мій шлях</span><span class="gcount" id="pPathCount"></span></summary>
@@ -593,10 +595,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611052125"></script>
-<script src="progress.js?v=202611052125" defer></script>
-<script src="words.js?v=202611052125"></script>
-<script src="lessons.js?v=202611052125"></script>
+<script src="config.js?v=202611052134"></script>
+<script src="progress.js?v=202611052134" defer></script>
+<script src="words.js?v=202611052134"></script>
+<script src="lessons.js?v=202611052134"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */

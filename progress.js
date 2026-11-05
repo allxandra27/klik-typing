@@ -178,13 +178,26 @@ const BADGES = [
   ["🇺🇦", "Українська розкладка", "Пройди всі українські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "ua" && !l.track).every(passed)],
   ["🇬🇧", "English", "Пройди всі англійські уроки на 2+ зірочки", () => LESSONS.filter(l => l.layout === "en" && !l.track).every(passed)]
 ];
+// Компактні «пігулки»: назва на кнопці, а як отримати — рядком під ними при наведенні чи натисканні.
+const BADGE_HINT = "Наведи на досягнення або натисни його, щоб побачити, як його отримати.";
 function renderBadges() {
-  const H = state.history;
-  $("pBadges").innerHTML = BADGES.map(([ic, t, d, test]) => {
-    const got = test(H);
-    return `<div class="badge ${got ? "got" : ""}"><span class="bic">${got ? ic : "🔒"}</span><b>${t}</b><span>${d}</span></div>`;
-  }).join("");
+  const H = state.history, got = BADGES.map(b => b[3](H));
+  $("pBadgeCount").textContent = `${got.filter(Boolean).length} з ${BADGES.length}`;
+  $("pBadges").innerHTML = BADGES.map(([ic, t], i) =>
+    `<button class="badge ${got[i] ? "got" : ""}" data-i="${i}" aria-pressed="false"><span class="bic">${got[i] ? ic : "🔒"}</span>${t}</button>`).join("");
+  $("pBadgeNote").textContent = BADGE_HINT;
 }
+function badgeNote(b, pin) {
+  const box = $("pBadges"), sel = box.querySelector('[aria-pressed="true"]');
+  if (pin) { if (sel) sel.setAttribute("aria-pressed", "false"); if (b && b !== sel) b.setAttribute("aria-pressed", "true"); }
+  const show = b && (!pin || b.getAttribute("aria-pressed") === "true") ? b : box.querySelector('[aria-pressed="true"]');
+  if (!show) { $("pBadgeNote").textContent = BADGE_HINT; return; }
+  const [, t, d] = BADGES[show.dataset.i];
+  $("pBadgeNote").textContent = `${t}: ${d.charAt(0).toLowerCase() + d.slice(1)}${show.classList.contains("got") ? ". Уже отримано! ✓" : "."}`;
+}
+$("pBadges").addEventListener("click", e => { const b = e.target.closest(".badge"); if (b) badgeNote(b, true); });
+$("pBadges").addEventListener("mouseover", e => { const b = e.target.closest(".badge"); if (b) badgeNote(b, false); });
+$("pBadges").addEventListener("mouseleave", () => badgeNote(null, false));
 
 /* ---------- лідери тижня ---------- */
 const MEDAL = ["🥇", "🥈", "🥉"];
