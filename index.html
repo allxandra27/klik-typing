@@ -217,6 +217,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .gamebox p{margin:0}
 .gamebox .klik{width:88px;height:88px}
 .gamebox .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gamerule{margin-top:10px!important;padding:8px 12px;border:2px dashed var(--line);border-radius:12px;font-size:16px;color:var(--muted)}
+.gamerule b{color:var(--ink)}
 .gold-cursor{fill:var(--pop);stroke:var(--ink);stroke-width:.8;stroke-linejoin:round}
 .gamebar{display:flex;justify-content:space-between;gap:16px;width:100%;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
 #mazeSvg{width:100%;max-height:56vh;display:block}
@@ -469,6 +471,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
       <h2 id="gTitle">Вітаю! Це Золотий курсор!</h2>
       <p id="gWhy"></p>
+      <p class="gamerule"><b>Правило:</b> гра відкривається лише один раз. Якщо натиснеш «Ні, дякую», повернутися до цього запрошення вже не можна. Після гри зіграти ще раз теж не вийде.</p>
       <div class="actions" style="margin-top:14px"><button class="btn primary" id="gPlay">Грати</button><button class="btn" id="gNo">Ні, дякую</button></div>
     </div>
     <div id="gPlayfield" style="width:100%" hidden>
@@ -476,6 +479,13 @@ button{font:inherit;color:inherit;cursor:pointer}
       <p id="gHint" style="margin:6px 0 10px">Веди Кліка стрілками до золотого курсора</p>
       <svg id="mazeSvg" role="img" aria-label="Лабіринт"><path id="mazeWalls"/><path class="gold-cursor" id="mazeGoal" d="M0 0V7.4L2 5.6 3.4 8.6 4.8 8 3.4 5H6Z"/><g id="mazeKlik"><svg class="klik" x="1" y="1" width="8" height="8" viewBox="0 0 260 260"><use href="#klik"/></svg></g></svg>
       <button class="btn" id="gClose" style="margin-top:12px">Завершити гру</button>
+    </div>
+    <div id="gAfter" hidden>
+      <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
+      <h2>Гру завершено!</h2>
+      <p id="gResult"></p>
+      <p class="gamerule" id="gNext"></p>
+      <div class="actions" style="margin-top:14px"><button class="btn primary" id="gDone">Зрозуміло</button></div>
     </div>
   </div>
 </div>
@@ -492,10 +502,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611050924"></script>
-<script src="progress.js?v=202611050924" defer></script>
-<script src="words.js?v=202611050924"></script>
-<script src="lessons.js?v=202611050924"></script>
+<script src="config.js?v=202611050941"></script>
+<script src="progress.js?v=202611050941" defer></script>
+<script src="words.js?v=202611050941"></script>
+<script src="lessons.js?v=202611050941"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -1047,8 +1057,8 @@ function checkGoldenCursor(acc,R){
   const n=c.done.length;
   if(n!==1&&n%GOLD.every) return;
   clearRain(); document.activeElement&&document.activeElement.blur();
-  $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «Клік у лабіринті». Вона відкривається лише один раз: зіграти пізніше не вийде.`;
-  $("gInvite").hidden=false; $("gPlayfield").hidden=true; $("gameBox").hidden=false;
+  $("gWhy").textContent=`${L.title}: майже без помилок (${acc}%) і дуже рівно (ритмічність ${R.rhythm}%). За це Клік запрошує тебе в секретну гру «Клік у лабіринті».`;
+  $("gInvite").hidden=false; $("gPlayfield").hidden=true; $("gAfter").hidden=true; $("gameBox").hidden=false;
 }
 const MAZE_LEVELS=[[9,6],[13,8],[17,10]], MAZE_MS=120000;
 let maze=null, gameEnd=0, gameTimer=null, mazeLevel=0;
@@ -1080,9 +1090,18 @@ function startMaze(){
   $("mazeKlik").style.transform="translate(0px,0px)";
   $("gLevel").textContent=`Лабіринт ${mazeLevel+1} з ${MAZE_LEVELS.length}`;
 }
+const plNew=n=>n%10===1&&n%100!==11?"новий урок":n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?"нові уроки":"нових уроків";
+// Скільки ще нових уроків з потрібним результатом лишилося до наступного запрошення.
+function nextInviteText(){
+  const n=(state.settings.cursor?.done||[]).length, need=(Math.floor(n/GOLD.every)+1)*GOLD.every-n;
+  const left=LESSONS.filter(l=>!(state.settings.cursor?.done||[]).includes(l.id)).length;
+  if(left<need) return "Ти зібрав майже всі Золоті курсори, які сховав Клік. Оце так результат!";
+  return `Наступне запрошення Клік надішле, коли ти пройдеш ще ${need} ${plNew(need)} з точністю від ${GOLD.accuracy}% і ритмічністю від ${GOLD.rhythm}%. Уроки, за які вже було нараховано, повторно не рахуються.`;
+}
 function endGame(text){
   clearTimeout(gameTimer); gameTimer=null; maze=null;
-  $("gHint").textContent=text; $("gClose").textContent="Закрити"; $("gClose").focus();
+  $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
+  $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
 }
 function gameTick(){
   const left=Math.max(0,Math.ceil((gameEnd-Date.now())/1000));
@@ -1092,11 +1111,11 @@ function gameTick(){
 }
 function closeGame(){clearTimeout(gameTimer); gameTimer=null; maze=null; $("gameBox").hidden=true;}
 $("gNo").onclick=closeGame;
-$("gClose").onclick=closeGame;
+$("gClose").onclick=()=>endGame(`Ти завершив гру раніше. Пройдено лабіринтів: ${mazeLevel} з ${MAZE_LEVELS.length}.`);
+$("gDone").onclick=closeGame;
 $("gPlay").onclick=()=>{
   mazeLevel=0; gameEnd=Date.now()+MAZE_MS;
   $("gInvite").hidden=true; $("gPlayfield").hidden=false; $("gPlay").blur();
-  $("gHint").textContent="Веди Кліка стрілками до золотого курсора"; $("gClose").textContent="Завершити гру";
   startMaze(); gameTick();
 };
 document.addEventListener("keydown",e=>{
