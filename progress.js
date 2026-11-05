@@ -193,7 +193,7 @@ function renderLeaders(box, sec) {
   box.innerHTML = `<p class="pnote">Завантажую рейтинг…</p>`;
   fetch(`${SHEET()}?action=leaders&group=${encodeURIComponent(st.cls)}&code=${encodeURIComponent(st.code)}`).then(r => r.json()).then(d => {
     if (!d.ok) return fail();
-    const rows = d.top.map(x => `<li class="${x.me ? "me" : ""}"><span>${x.gain > 0 && MEDAL[x.place - 1] || x.place + "."} ${esc(x.name)}${x.me ? " (це ти!)" : ""}</span>` +
+    const rows = d.top.map(x => `<li class="${x.me ? "me" : ""}"><span>${x.gain > 0 ? MEDAL[x.place - 1] || x.place + "." : "—"} ${esc(x.name)}${x.me ? " (це ти!)" : ""}</span>` +
       `<b class="${x.gain > 0 ? "" : "zero"}">${x.gain > 0 ? "+" : ""}${x.gain} ★</b></li>`).join("");
     box.innerHTML = `<ol>${rows}</ol>` +
       (d.me.gain > 0 ? "" : `<p class="pnote">У тебе поки немає нових зірочок цього тижня. Пройди урок на більше зірочок, ніж раніше!</p>`) +
