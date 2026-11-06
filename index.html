@@ -252,6 +252,30 @@ button{font:inherit;color:inherit;cursor:pointer}
 .gamebox p{margin:0}
 .gamebox .klik{width:88px;height:88px}
 .gamebox .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+/* запрошення на гру: святковий вигляд, щоб його не сплутали зі звичайним вікном */
+.gamebox.festive{gap:8px;padding-top:26px;border-width:4px;background:linear-gradient(180deg,color-mix(in srgb,var(--pop) 34%,var(--surface)) 0,var(--surface) 52%);animation:invIn .55s cubic-bezier(.2,1.5,.4,1),invGlow 2.2s ease-in-out .55s infinite}
+.invhero{position:relative;width:min(240px,80%);height:124px;margin:6px auto 0}
+.invrays{position:absolute;left:50%;top:50%;width:170px;height:170px;margin:-85px 0 0 -85px;border-radius:50%;background:repeating-conic-gradient(color-mix(in srgb,var(--pop) 70%,transparent) 0 11deg,transparent 11deg 30deg);-webkit-mask:radial-gradient(circle,#000 18%,transparent 68%);mask:radial-gradient(circle,#000 18%,transparent 68%);animation:invSpin 16s linear infinite}
+.invcursor{position:absolute;left:50%;top:50%;width:64px;height:90px;margin:-48px 0 0 -26px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.25));animation:invDrop .8s cubic-bezier(.2,1.6,.4,1),invFloat 2.6s ease-in-out .8s infinite}
+.invcursor .gold-cursor{stroke-width:4}
+.gamebox .invklik{position:absolute;right:2px;bottom:-4px;width:58px;height:58px;animation:invPeek .7s ease-out .5s backwards}
+.invspark{position:absolute;font-style:normal;font-size:22px;color:var(--pop);animation:invTwinkle 1.6s ease-in-out infinite}
+.invkicker{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink)}
+.gamebox.festive h2{font-size:26px}
+.invactions{margin-top:14px;align-items:center;flex-direction:column}
+.btn.gold{background:var(--pop);border-color:var(--ink);color:var(--pop-ink);box-shadow:0 4px 0 var(--ink);animation:invPulse 1.4s ease-in-out 1.2s infinite}
+.btn.gold:hover{filter:brightness(1.06)}
+.btn.quiet{border-color:transparent;background:none;color:var(--muted);font-size:15px;font-weight:700;padding:4px 12px}
+.btn.quiet:hover{color:var(--fg);text-decoration:underline}
+.rain.conf{font-size:0;border-radius:2px}
+@keyframes invIn{from{transform:scale(.6);opacity:0}}
+@keyframes invGlow{0%,100%{box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 0 color-mix(in srgb,var(--pop) 70%,transparent)}50%{box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 14px color-mix(in srgb,var(--pop) 0%,transparent)}}
+@keyframes invSpin{to{transform:rotate(360deg)}}
+@keyframes invDrop{from{transform:translateY(-120px) rotate(-25deg);opacity:0}}
+@keyframes invFloat{50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes invPeek{from{transform:translateY(40px);opacity:0}}
+@keyframes invTwinkle{0%,100%{transform:scale(.4);opacity:.2}50%{transform:scale(1.2);opacity:1}}
+@keyframes invPulse{50%{transform:scale(1.06)}}
 .gamerule{margin-top:10px!important;padding:8px 12px;border:2px dashed var(--line);border-radius:12px;font-size:16px;color:var(--muted)}
 .gamerule b{color:var(--ink)}
 .gold-cursor{fill:var(--pop);stroke:var(--ink);stroke-width:.8;stroke-linejoin:round}
@@ -559,11 +583,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div class="overlay" id="gameBox" role="dialog" aria-labelledby="gTitle" hidden>
   <div class="gamebox">
     <div id="gInvite">
-      <svg class="klik" viewBox="0 0 260 260" aria-hidden="true"><use href="#klik"/></svg>
-      <h2 id="gTitle">Вітаю! Це Золотий курсор!</h2>
+      <div class="invhero" aria-hidden="true">
+        <div class="invrays"></div>
+        <i class="invspark" style="left:14%;top:22%">✦</i><i class="invspark" style="left:80%;top:14%;animation-delay:.5s">✦</i>
+        <i class="invspark" style="left:24%;top:72%;animation-delay:.9s">✦</i><i class="invspark" style="left:74%;top:68%;animation-delay:.3s">✦</i>
+        <svg class="invcursor" viewBox="-4 -4 68 96"><path class="gold-cursor" d="M0 0V74L20 56 34 86 48 80 34 50H60Z"/></svg>
+        <svg class="klik invklik" viewBox="0 0 260 260"><use href="#klik"/></svg>
+      </div>
+      <p class="invkicker">Секретна нагорода від Кліка</p>
+      <h2 id="gTitle">Ти здобув Золотий курсор!</h2>
       <p id="gWhy"></p>
       <p class="gamerule"><b>Правило:</b> гра відкривається лише один раз. Якщо натиснеш «Ні, дякую», повернутися до цього запрошення вже не можна. Після гри зіграти ще раз теж не вийде.</p>
-      <div class="actions" style="margin-top:14px"><button class="btn primary" id="gPlay">Грати</button><button class="btn" id="gNo">Ні, дякую</button></div>
+      <div class="actions invactions"><button class="btn gold big" id="gPlay">▶ Грати!</button><button class="btn quiet" id="gNo">Ні, дякую</button></div>
     </div>
     <div id="gPlayfield" style="width:100%" hidden>
       <div class="gamebar"><span id="gLevel"></span><span id="gTime"></span></div>
@@ -595,10 +626,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <circle cx="36" cy="168" r="18"/><circle cx="224" cy="188" r="18"/></g></symbol>
 </svg>
 
-<script src="config.js?v=202611052134"></script>
-<script src="progress.js?v=202611052134" defer></script>
-<script src="words.js?v=202611052134"></script>
-<script src="lessons.js?v=202611052134"></script>
+<script src="config.js?v=202611061042"></script>
+<script src="progress.js?v=202611061042" defer></script>
+<script src="words.js?v=202611061042"></script>
+<script src="lessons.js?v=202611061042"></script>
 <script>
 "use strict";
 /* ---------- розкладки та пальці ---------- */
@@ -1209,6 +1240,18 @@ function rain(what,count=28){
     document.body.appendChild(el);
   }
 }
+// Різнокольорове конфеті для запрошення на гру
+function confetti(count=46){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  clearRain();
+  const colors=["var(--pop)","var(--s1)","var(--s2)","var(--ok)","var(--pink)"];
+  for(let i=0;i<count;i++){
+    const el=document.createElement("span"); el.className="rain conf";
+    el.style.cssText=`left:${Math.random()*96}vw;width:${8+Math.random()*5}px;height:${12+Math.random()*6}px;background:${colors[i%colors.length]};animation-duration:${2.4+Math.random()*2.2}s;animation-delay:${Math.random()*1.2}s`;
+    el.addEventListener("animationend",()=>el.remove());
+    document.body.appendChild(el);
+  }
+}
 function foundEgg(id,text){
   if(!state.student) return;
   const eggs=state.settings.eggs=state.settings.eggs||[], isNew=!eggs.includes(id);
@@ -1256,6 +1299,7 @@ function cursorState(){
   return c;
 }
 const goldLevel=c=>GOLD[Math.min(c.invites,GOLD.length-1)];
+let noTimer=null;
 function checkGoldenCursor(acc,R){
   if(!GOLD||!R||!LESSONS.includes(L)) return;
   const c=cursorState(), lv=goldLevel(c);
@@ -1268,6 +1312,9 @@ function checkGoldenCursor(acc,R){
   clearRain(); document.activeElement&&document.activeElement.blur();
   $("gWhy").textContent=`${L.title}: ти надрукував точно (${acc}%) і рівно (ритмічність ${R.rhythm}%)${lv.lessons>1?`, і це вже ${lv.lessons}-й такий урок`:""}. За це Клік запрошує тебе в секретну гру «${game.name}».`;
   $("gInvite").hidden=false; $("gPlayfield").hidden=true; $("gAfter").hidden=true; $("gameBox").hidden=false;
+  $("gameBox").firstElementChild.classList.add("festive"); confetti();
+  // «Ні, дякую» з'являється на мить пізніше: запрошення не закриють випадково, не прочитавши
+  $("gNo").style.visibility="hidden"; clearTimeout(noTimer); noTimer=setTimeout(()=>$("gNo").style.visibility="",2500);
 }
 const GAME_MS=120000, MAZE_LEVELS=[[9,6],[13,8],[17,10]], BRIDGE_LEVELS=[5,6,7];
 const GAMES={
@@ -1383,6 +1430,7 @@ $("kbGame").addEventListener("click",e=>{
 function endGame(text,title="Гру завершено!"){
   clearTimeout(gameTimer); gameTimer=null; maze=null; bridge=null; kbGame=null;
   $("gAfterTitle").textContent=title; $("gResult").textContent=text; $("gNext").textContent=nextInviteText();
+  $("gameBox").firstElementChild.classList.remove("festive"); clearRain();
   $("gInvite").hidden=true; $("gPlayfield").hidden=true; $("gAfter").hidden=false; $("gDone").focus();
 }
 function gameTick(){
@@ -1402,6 +1450,7 @@ $("gClose").onclick=()=>endGame(`Ти завершив гру раніше. Пр
 $("gDone").onclick=closeGame;
 $("gPlay").onclick=()=>{
   gameLevel=0; gameEnd=Date.now()+GAME_MS;
+  $("gameBox").firstElementChild.classList.remove("festive"); clearRain();
   $("gInvite").hidden=true; $("gPlayfield").hidden=false; $("gPlay").blur();
   $("mazeSvg").toggleAttribute("hidden",game!==GAMES.maze); $("bridgeBox").hidden=game!==GAMES.bridge; $("kbBox").hidden=game!==GAMES.keys;
   $("gHint").textContent=game.how;
